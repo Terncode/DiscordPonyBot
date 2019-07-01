@@ -10,6 +10,16 @@ export function urbanDictonary(message: Message) {
     if (!p) return false;
     if (!p.startsWith('ud') && !p.startsWith('urbandictonary')) return false;
 
+     //@ts-ignore
+    if (!message.channel.nsfw) {
+        if (message.channel.type !== 'dm')
+            message.channel.send(message.channel, errorEmbed('This command only works in nsfw channels!'));
+        else {
+            message.channel.send(message.channel, errorEmbed('This command do not works in dm channels!'));
+        }
+        return true;
+    }
+    
     if (p.indexOf(' ') === -1) return randomWord(message)
     let string = p.slice(p.indexOf(' ')).trim();
 
