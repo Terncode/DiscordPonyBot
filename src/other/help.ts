@@ -23,7 +23,8 @@ export function help(message: Message): boolean {
     if (language.derpibooru) commands += `${guildPrefix}depibooru ${language.derpibooru}.\n`;
     if (language.randomFace) commands += `${guildPrefix}rd ${language.randomFace}.\n`;
     if (language.wordDeinition) commands += `${guildPrefix}define ${language.wordDeinition}.\n`;
-    if (language.urbanDictonary) commands += `${guildPrefix}ud ${language.urbanDictonary}.\n`;
+       //@ts-ignore
+    if (message.channel.nsfw &&language.urbanDictonary) commands += `${guildPrefix}ud ${language.urbanDictonary}.\n`;
     if (language.translate) commands += `${guildPrefix}translate ${language.translate}.\n`;
     if (language.fact) commands += `${guildPrefix}fact ${language.fact}.\n`;
     if (language.joke) commands += `${guildPrefix}joke ${language.joke}.\n`;
