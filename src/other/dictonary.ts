@@ -4,6 +4,8 @@ import { prefix } from "./guildPrefix";
 import { embedSend } from './sendMessage';
 
 const logo = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJuyaXUT9CDxfoxAhEOZXAs0JT1YinMGz5dOkzTwlfBmpnBre9Cw";
+const words = ["anal", "anus", "arse", "ass", "assfuck", "asshole", "assfucker", "asshole", "assshole", "bastard", "bitch", "blackcock", "bloodyhell", "boong", "cock", "cockfucker", "cocksuck", "cocksucker", "coon", "coonnass", "crap", "cunt", "cyberfuck", "damn", "darn", "dick", "dirty", "douche", "dummy", "erect", "erection", "erotic", "escort", "fag", "faggot", "fuck", "Fuckoff", "fuckyou", "fuckass", "fuckhole", "goddamn", "gook", "hardcore", "hardcore", "homoerotic", "hore", "lesbian", "lesbians", "mother fucker", "motherfuck", "motherfucker", "negro", "nigger", "orgasim", "orgasm", "penis", "penisfucker", "piss", "pissoff", "porn", "porno", "pornography", "pussy", "retard", "sadist", "sex", "sexy", "shit", "slut", "sonofabitch", "suck", "tits", "viagra", "whore", "xxx"];
+
 
 export function dictonary(message: Message) {
     const p = prefix(message).toLowerCase();
@@ -20,6 +22,15 @@ export function dictonary(message: Message) {
     }
     let string = p.slice(p.indexOf(' ')).trim();
 
+    if (message.channel.nsfw !== true) {
+        if (words.includes(string.toLowerCase().replace(/[^a-zA-Z:,]+/g, ''))) {
+            embed.setColor("RED");
+            embed.addField('Error', 'Word ignored')
+            embedSend(message.channel, embed);
+            return true;
+        }
+    }
+    
     define(message, string, embed);
 
 
