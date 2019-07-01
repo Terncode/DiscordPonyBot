@@ -1,0 +1,127 @@
+{
+    "language": {
+        "name": "Language",
+        "ISO": "iso",
+        "notOffical": "This Language is translated! Translations are not 100% correct"
+    },
+    "help": {
+        "help": "Help",
+        "commands": "Commands",
+        "showHelp": "- Shows this",
+        "hugsYou": "- Hugs you",
+        "boopsYou": "- Boops you",
+        "derpibooru": "[tags,tags] - Gets Random image from derpibooru.org",
+        "translate": "[language] [message] - Translate text",
+        "rolls": "[[min-]max] - Randomize a number",
+        "stats": "[user/server/bot] - Shows stats"
+    },
+    "other": {
+        "boops": "Boops",
+        "hugs": "Hugs"
+    },
+    "ponytown": {
+        "collected": "Collected",
+        "changelog": "Changelog",
+        "yourRandomFaceIs": "Your random face is"
+    },
+    "info": {
+        "prefixInfo": "My prefix in this guild is",
+        "error": "Unknown error"
+    },
+    "guildAdmin": {
+        "prefixNotFound": "Prefix must at least have 1 charater!",
+        "prefixLimit": "Prefix cannot be longer than 5 charaters!",
+        "prefixSuccessfully": "prefix of this guild changed succeffuly! New prefix",
+        "prefixShow": "Prefix of this guild is",
+        "notAdmin": "You are not admin of this guild",
+        "newGuildLang": "New guild language is",
+        "langNotExist": "This language does not exist or is not available!"
+    },
+    "roll": {
+        "rolled": "rolled",
+        "of": "of"
+    },
+    "translate": {
+        "help": "Help",
+        "error": "Error",
+        "langError": "Language Error",
+        "translatedTo": "Transalated to",
+        "command": "translate <language-to-translate> <message-to-translate>",
+        "msgNotFound": "Cannot find message to translate",
+        "languageError": "Language that you are trying to translate is not available or it doesn't exist"
+    },
+    "derpibooru": {
+        "error": "Error",
+        "unavailable": "Unavailable at the moment",
+        "score": "Score",
+        "description": "Description",
+        "tags": "Tags",
+        "artist": "Artist",
+        "unknownArtist": "Unknown Artist",
+        "derpibooruImage": "Derpibooru Image",
+        "uploader": "Uploader",
+        "nothingFound": "No results",
+        "missingEmbedPermission": "Missing embed permission!"
+    },
+
+    "stats": {
+        "status": {
+            "name": "Status",
+            "online": "Online",
+            "dnd": "Do not disturb",
+            "idle": "Idle",
+            "offline": "Offline"
+        },
+        "game": {
+            "type": "Type",
+            "playing": "Playing",
+            "streaming": "Streaming",
+            "listening": "Listening",
+            "watching": "Watching",
+            "name": "Game",
+            "gameName": "Name",
+            "details": "Details",
+            "state": "State"
+        },
+        "time": {
+            "accountCreation": "Account created",
+            "accountAge": "Age",
+            "day": "Day",
+            "days": "Days",
+            "year": "Year",
+            "years": "Years"
+        },
+        "guild": {
+            "guildJoin": "Joined this guild",
+            "joinAge": "Has been in this guild",
+            "roles": "Roles",
+            "nickname": "Nickname",
+            "region": "Region",
+            "bots": "Bots",
+            "humans": "Humans",
+            "channels": "Channels",
+            "guildCreated": "Guild create",
+            "guildAge": "Guild Age",
+            "emojis": "Emojis",
+            "noTextChannels": "No text channels",
+            "members": "Members",
+            "noOne": "No One",
+            "noBots": "No bots",
+            "noHumans": "No humans"
+        },
+        "bot": {
+            "totalTextChannels": "Total text channels",
+            "totalUsers": "Total Users",
+            "totalGuilds": "Total guilds",
+            "inviteLink": "Invite link",
+            "clickHere": "Click",
+            "botOwner": "Bot owner"
+        }
+    },
+    "guild": {
+        "info": "Info",
+        "join": "joined the guild",
+        "left": "left the guild",
+        "accountAge": "Account Created"
+    }
+}

@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "module": "es6",
+        "outDir": "dist/",
+        "noImplicitAny": false,
+        "removeComments": false,
+        "preserveConstEnums": true,
+        "target": "es2020"
+    },
+    "include": ["node_modules", ".src/*"]
+}
