@@ -13,9 +13,9 @@ export function urbanDictonary(message: Message) {
      //@ts-ignore
     if (!message.channel.nsfw) {
         if (message.channel.type !== 'dm')
-            message.channel.send(message.channel, errorEmbed('This command only works in nsfw channels!'));
+              embedSend(message.channel, errorEmbed('This command only works in nsfw channels!'));
         else {
-            message.channel.send(message.channel, errorEmbed('This command do not works in dm channels!'));
+              embedSend(message.channel, errorEmbed('This command do not works in dm channels!'));
         }
         return true;
     }
