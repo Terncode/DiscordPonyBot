@@ -1,7 +1,7 @@
 import { Message, RichEmbed } from 'discord.js';
 import { term, random } from 'urban-dictionary';
 import { prefix } from './guildPrefix';
-import { embedSend } from './sendMessage';
+import { embedSend, errorEmbed } from './sendMessage';
 
 const urbanDictonaryIco = 'https://firebounty.com/image/635-urban-dictionary';
 const urbanDictonaryUrl = 'https://www.urbandictionary.com';
@@ -10,16 +10,16 @@ export function urbanDictonary(message: Message) {
     if (!p) return false;
     if (!p.startsWith('ud') && !p.startsWith('urbandictonary')) return false;
 
-     //@ts-ignore
+    //@ts-ignore
     if (!message.channel.nsfw) {
         if (message.channel.type !== 'dm')
-              embedSend(message.channel, errorEmbed('This command only works in nsfw channels!'));
+            embedSend(message.channel, errorEmbed('This command only works in nsfw channels!'));
         else {
-              embedSend(message.channel, errorEmbed('This command do not works in dm channels!'));
+            embedSend(message.channel, errorEmbed('This command do not works in dm channels!'));
         }
         return true;
     }
-    
+
     if (p.indexOf(' ') === -1) return randomWord(message)
     let string = p.slice(p.indexOf(' ')).trim();
 

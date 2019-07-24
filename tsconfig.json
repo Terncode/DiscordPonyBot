@@ -1,11 +1,13 @@
 {
     "compilerOptions": {
-        "module": "es6",
         "outDir": "dist/",
+        "target": "es2019",
+        "module": "commonjs",
+        "sourceMap": true,
+        "declaration": true,
         "noImplicitAny": false,
-        "removeComments": false,
-        "preserveConstEnums": true,
-        "target": "es2020"
+        "removeComments": true,
+
     },
-    "include": ["node_modules", ".src/*"]
+    "include": ["src/*"]
 }

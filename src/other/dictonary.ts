@@ -22,6 +22,7 @@ export function dictonary(message: Message) {
     }
     let string = p.slice(p.indexOf(' ')).trim();
 
+    //@ts-ignore
     if (message.channel.nsfw !== true) {
         if (words.includes(string.toLowerCase().replace(/[^a-zA-Z:,]+/g, ''))) {
             embed.setColor("RED");
@@ -30,7 +31,7 @@ export function dictonary(message: Message) {
             return true;
         }
     }
-    
+
     define(message, string, embed);
 
 

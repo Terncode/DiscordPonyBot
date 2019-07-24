@@ -186,22 +186,7 @@ function compilemessage(embed: RichEmbed, result, language) {
         }
         embed.addField(language.tags, limitSctring1024(result.tagNames.join(', ')));
 
-        // console.log(await result.comments().comments)
-
-        /*
-        const tags = result.tagNames.splice(0, 10).join(', ') + (result.tagNames.length > 10 ? '...' : '')
-        embed.addField('Tags', tags);
-
-        const uploaded = `${result.created.toDateString()} by ${result.uploaderName}`
-        embed.addField('Uploaded', uploaded);
-
-        const score = `${result.score} (+${result.upvotes}/-${result.downvotes})`
-        embed.addField('Score', score, true);
-
-        const faves = `${result.favorites}`;
-        embed.addField('Favorites', faves, true);
-*/
-        embed.setImage(result.representations.medium);
+        embed.setImage(result.representations.full);
 
         Jimp.read(result.representations.thumbnailSmall, (err, image) => {
             if (err) {
@@ -217,8 +202,6 @@ function compilemessage(embed: RichEmbed, result, language) {
                 return resolve(embed);
             }
         });
-
-
     });
 }
 
@@ -230,87 +213,15 @@ function limitSctring1024(string: string) {
     return string + '...';
 }
 
-
-
-
-
-
 function slugify(param: string) {
     return param.replace('.', '-dot-').replace('-', '-dash-').replace('\\', '-bwslash-')
         .replace(':', '-colon-').replace('/', '-fwslash-').replace('+', '-plus-');
 }
 
 
-
-
-
-
-
-
-
-
-
-
-function sendDerpi(message: Message, embed: RichEmbed, language: any) {
-    message.channel.stopTyping();
-    message.channel.send(embed);
-}
 function sendError(message: Message, embed: RichEmbed, language: any) {
     message.channel.stopTyping();
     embed.setColor("RED");
 
     message.channel.send(embed);
-
 }
-
-
-
-/*
-    //adds or removes recommended tagssads
-    if (!areThereArgs) options.query = "!" + improvedNSFWFilter.join(",!");
-    else {
-        let webmR = true;
-        let custom = improvedNSFWFilter;
-        let filterCheck = [];
-        for (let i in args) {
-            for (let j in improvedNSFWFilter) {
-                if (args[i] == "webm") {
-                    args[i] = "!webm";
-                    if (webmR) {
-                        webmR = false;
-                        message.reply(lang.derpibooruWebm).catch(() => { });
-                    }
-                }
-                if (args[i] == improvedNSFWFilter[j]) custom[j] = "";
-                else filterCheck.push(args[i]);
-            }
-        }
-        options.query = `${args.filter(Boolean).join(",")},!${custom.filter(Boolean).join(",!")}`;
-    }
-
-    //do search
-    try {
-        searchResults = await Derpibooru.Fetch.search(options);
-    } catch (err) {
-        message.channel.stopTyping();
-        message.channel.send(lang.derpibooruError).catch(() => { });
-        return false;
-    }
-    console.log(options)
-
-    //pick random resoult
-    let results = searchResults.images;
-
-    console.log(results.length)
-    if (results.length > 0) {
-        let result = results[Math.floor(Math.random() * results.length)];
-        return await embedImage(result, true);
-    } else {
-        message.channel.stopTyping();
-        message.channel.send(`${lang.derpibooruSearchFailed} \` ${args.join(",")}\``).catch(() => { });
-        return false;
-    }
-}
-
-
-*/

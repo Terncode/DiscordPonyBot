@@ -9,7 +9,6 @@ const ColorThief = require('color-thief-jimp');
 import * as path from 'path';
 import * as fs from 'fs';
 import { prefix } from '../other/guildPrefix';
-import { ponyTown } from '../other/ponyTown';
 
 
 const guildID = process.env.GUILD_ID;
