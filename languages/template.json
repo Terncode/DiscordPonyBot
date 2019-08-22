@@ -19,11 +19,6 @@
         "boops": "Boops",
         "hugs": "Hugs"
     },
-    "ponytown": {
-        "collected": "Collected",
-        "changelog": "Changelog",
-        "yourRandomFaceIs": "Your random face is"
-    },
     "info": {
         "prefixInfo": "My prefix in this guild is",
         "error": "Unknown error"
