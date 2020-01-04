@@ -1,0 +1,145 @@
+{
+    "offical": true,
+    "language": {
+        "name": "Português do Brasil",
+        "ISO": "Pt-BR"
+    },
+    "help": {
+        "help": "Ajuda",
+        "commands": "Comandos",
+        "showHelp": "- Amostra isto",
+        "hugsYou": "- Abraça você",
+        "boopsYou": "- Boop você",
+        "derpibooru": "[tags,tags] - Pega imagens aleatórias de derpibooru.org",
+        "wordDeinition": "[word] - Define a palavra",
+        "urbanDictonary": "[word] - Define word from urbanDictonary",
+        "translate": "[language] [message] - translate text",
+        "rolls": "[[min-]max] - Randomize a number",
+        "joke": "- Tells you random joke",
+        "fact": "- Tells you random fact",
+        "stats": "[user/server/bot] - Shows stats"
+    },
+    "other": {
+        "boops": "Boopa",
+        "hugs": "Abraça"
+    },
+    "ponytown": {
+        "collected": "Coletado/s",
+        "changelog": "Registro de Alterações",
+        "yourRandomFaceIs": "Your random face is"
+    },
+    "info": {
+        "prefixInfo": "My prefix in this guild is",
+        "error": "Unknown error"
+    },
+    "guildAdmin": {
+        "prefixNotFound": "Prefix must at least have 1 charater!",
+        "prefixLimit": "Prefix cannot be longer than 5 charaters!",
+        "prefixSuccessfully": "prefix of this guild changed succeffuly! New prefix",
+        "prefixShow": "Prefix of this guild is",
+        "notAdmin": "You are not admin of this guild",
+        "newGuildLang": "New guild language is",
+        "langNotExist": "This language does not exist or is not available. Languages that you can use"
+    },
+    "roll": {
+        "rolled": "rolou",
+        "of": "de"
+    },
+    "translate": {
+        "help": "Ajuda",
+        "error": "Erro",
+        "langError": "Erro de Linguagem",
+        "translatedTo": "Traduzido para",
+        "command": "traduzir <language-to-translate> <message-to-translate>",
+        "msgNotFound": "Mensagem para traduzir não encontrada",
+        "languageError": "A língua que você está tentando traduzir não está disponível ou não existe"
+    },
+    "derpibooru": {
+        "error": "Erro",
+        "unavailable": "Indisponível no momento",
+        "score": "Pontuação",
+        "description": "Descrição",
+        "tags": "Tags",
+        "artist": "Artista",
+        "unknownArtist": "Artista Desconhecido",
+        "derpibooruImage": "Imagem de Derpibooru",
+        "uploader": "Uploader",
+        "nothingFound": "Nenhum resultado",
+        "missingEmbedPermission": "Faltando permissão incorporada!"
+    },
+
+    "stats": {
+        "status": {
+            "name": "Status",
+            "online": "On-line",
+            "dnd": "Não Perturbe",
+            "idle": "Parado",
+            "offline": "Offline"
+        },
+        "game": {
+            "type": "Tipo",
+            "playing": "Jogando",
+            "streaming": "Transmitindo",
+            "listening": "Ouvindo",
+            "watching": "Assistindo",
+            "name": "Jogo",
+            "gameName": "Nome",
+            "details": "Detalhes",
+            "state": "Estado"
+        },
+        "time": {
+            "accountCreation": "Account created",
+            "accountAge": "Idade",
+            "day": "Dia",
+            "days": "Dias",
+            "year": "Anos",
+            "years": "Anos"
+        },
+        "guild": {
+            "guildJoin": "Joined this guild",
+            "joinAge": "Esteve nesta guilda",
+            "roles": "Cargos",
+            "nickname": "Apelido",
+            "region": "Região",
+            "bots": "Bots",
+            "humans": "Humanos",
+            "channels": "Canais",
+            "guildCreated": "Guild criada",
+            "guildAge": "Idade da Guilda",
+            "emojis": "Emojis",
+            "noTextChannels": "Nenhum canal de texto",
+            "members": "Membros",
+            "noOne": "Ninguém",
+            "noBots": "Nenhum bots",
+            "noHumans": "Nenhum humano"
+        },
+        "bot": {
+            "totalTextChannels": "Canais de texto no total",
+            "totalUsers": "Usuários no Total",
+            "totalGuilds": "Guildas no Total",
+            "inviteLink": "Link de Convite",
+            "clickHere": "Click",
+            "botOwner": "Dono do Bot"
+        }
+    },
+    "guild": {
+        "info": "Informações",
+        "join": "Entrou na the Guilda",
+        "left": "Deixou a Guilda",
+        "accountAge": "Conta Criada"
+    }
+}
+            "totalUsers": "Total de usuários",
+            "totalGuilds": "Total de guildas",
+            "inviteLink": "Link de Convite",
+            "clickHere": "Clique",
+            "botOwner": "Dono do Bot"
+        }
+    },
+    "guild": {
+        "info": "Info",
+        "join": "entrou na guilda",
+        "left": "deixou a guilda",
+        "accountAge": "Conta Criada"
+    }
+}
