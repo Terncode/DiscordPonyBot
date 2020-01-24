@@ -1,0 +1,318 @@
+{
+    "fullName": "English UK",
+    "iso": "en-UK",
+    "timeFormatting": "DD/MM/YYYY, HH:MM:SS",
+    "author": "Terncode",
+    "notHundredProcent": "Language translations may not be 100% accurate",
+    "official": true,
+    "disabledCommand": "This command is disabled",
+    "notWorkInDm": "This command does not work in DM channel",
+    "date": {
+        "day": "day",
+        "days": "days",
+        "year": "year",
+        "hour": "hour",
+        "hours": "hour",
+        "years": "year",
+        "month": "month",
+        "minute": "minute",
+        "second": "second",
+        "months": "months",
+        "minutes": "minutes",
+        "seconds": "seconds"
+    },
+    "logs": {
+        "info": "Info",
+        "joined": "&USER has joined",
+        "left": "&USER has left",
+        "reason": "Reason",
+        "hasBeenBanned": "&USER has been banned",
+        "hasBeenUnbanned": "&USER has been unbanned",
+        "hasBeenKicked": "&USER has been kicked",
+        "accountAge": "Account created",
+        "hasBeenInGuild": "Has been in guild for"
+    },
+    "pt": {
+        "collected": "Collected &RESULT &EMOJI",
+        "rolled": "🎲 rolled &RESULT of &MAX_VALUE",
+        "toys": "Collected &RESULT/&MAX_TOYS toys",
+        "randomFace": "Your random face is `&RANDOM_FACE`",
+        "missingPermissionAttachFiles": "Missing permissions `ATTACH_FILES`",
+        "commands": {
+            "cookies": [
+                "biscuit",
+                "biscuits"
+            ],
+            "command": [],
+            "candy": [
+                "sweet",
+                "sweets"
+            ],
+            "eggs": [],
+            "gifts": [],
+            "roll": [],
+            "clover": [],
+            "toys": [],
+            "changeLog": [],
+            "randomAction": [],
+            "randomFace": []
+        }
+    },
+    "urbanDictionary": {
+        "notAllowedInSFW": "This command cannot be used in SFW channels!",
+        "notAllowedInDM": "This command cannot be used in DM channels",
+        "notAllowedInUnknownChannel": "This command is not allowed in this channel",
+        "error": "Error",
+        "definition": "Definition",
+        "example": "Example",
+        "source": "Source",
+        "command": []
+    },
+    "derpibooru": {
+        "missingPermissionEmbedLinks": "Missing permission `EMBED_LINKS`. No one should ever be without ponies. Here is your link\n &URL",
+        "derpibooruImage": "Derpibooru Image",
+        "artist": "Artist",
+        "uploader": "Uploader",
+        "noResult": "No result found",
+        "description": "Description",
+        "moreTabs": "&NUMBER more tags...",
+        "score": "Score",
+        "tags": "Tags",
+        "source": "Source",
+        "unknownArtist": "Unknown artist",
+        "somethingWentWrong": "Something went wrong while trying to obtain the image",
+        "commands": []
+    },
+    "dictionary": {
+        "noResult": "Word not found",
+        "missingPermissionEmbedLinks": "sorry missing permission `EMBED_LINKS`",
+        "commands": []
+    },
+    "help": {
+        "title": "Help",
+        "prefix": "My prefix in this guild is: `&PREFIX`",
+        "notAdminHelp": "You are not admin or moderator. Use of this command is useless for you",
+        "adminHelp": "&PREFIX&COMMAND - admin help",
+        "help": "&PREFIX&COMMAND - shows help",
+        "derpibooru": "&PREFIX&COMMAND [...tags] - gets random image from derpibooru.org (pony image)",
+        "hugs": "&PREFIX&COMMAND - hugs user",
+        "boop": "&PREFIX&COMMAND - boops user",
+        "joke": "&PREFIX&COMMAND - tells you random joke",
+        "fact": "&PREFIX&COMMAND - tells you random fact",
+        "translate": "&PREFIX&COMMAND [language] [message] - translate given message to english or given language",
+        "dictionary": "&PREFIX&COMMAND [word] - gives you definition of the word",
+        "urbanDictionary": "&PREFIX&COMMAND [word] - give you definition of the word from urban dictionary",
+        "guildAdminHelp": {
+            "ponyImages": "&PREFIX&COMMAND [&ARGS] - Subscribes to pony images",
+            "ptUpdates": "&PREFIX&COMMAND [&ARGS] - Subscribes to pony.town updates",
+            "language": "&PREFIX&COMMAND [language] - Switches to language",
+            "prefix": "&PREFIX&COMMAND [prefix] - changes prefix",
+            "autoUnitConversion": "&PREFIX&COMMAND [&ARGS] - enables auto unit conversion",
+            "swearProtection": "&PREFIX&COMMAND [&ARGS] - enables swear protections",
+            "ban": "&PREFIX&COMMAND [user] [reason] - bans user",
+            "kick": "&PREFIX&COMMAND [user] [reason] - kicks user",
+            "purge": "&PREFIX&COMMAND [number] [user] - purge messages"
+        },
+        "commands": {
+            "AliasesCommands": [],
+            "adminHelp": [],
+            "helpCommands": []
+        }
+    },
+    "translate": {
+        "somethingWentWrong": "Something went wrong please try again later",
+        "nothingToTranslate": "That is not going to work you need to give me a message to translate",
+        "commands": []
+    },
+    "stats": {
+        "guildArgs": [],
+        "createdUserAccount": "Has created account",
+        "memberJoinedGuild": "Has join guild",
+        "roles": "Roles",
+        "bot": {
+            "inviteLink": "Bot's invite link",
+            "inviteLinkClick": "Invite Link",
+            "status": "Status",
+            "botOwner": "Bot owner",
+            "channels": "Channels",
+            "guild": "Guilds",
+            "users": "Users",
+            "version": "Version"
+        },
+        "guild": {
+            "members": "Members (&COUNT)",
+            "channels": "Channels (&COUNT)",
+            "bots": "Bots",
+            "humans": "Humans",
+            "textChannel": "Text",
+            "voiceChannel": "Voice",
+            "emojis": "Emojis (&COUNT)",
+            "emojisAnimated": "Animated",
+            "emojisNotAnimated": "Not Animated",
+            "roles": "Roles (&COUNT)",
+            "rolesHoisted": "Hoisted",
+            "rolesNotHoisted": "Not Hoisted",
+            "guildCreated": "Guild created at",
+            "region": "Region"
+        },
+        "presence": {
+            "game": {
+                "name": "Name",
+                "applicationID": "Application ID",
+                "details": "Details",
+                "timeEnd": "End",
+                "timeStart": "start",
+                "url": "Url",
+                "type": {
+                    "customStatus": "Custom Status",
+                    "listenings": "Listening",
+                    "playing": "Playing",
+                    "steaming": "Streaming",
+                    "watching": "Watching"
+                }
+            },
+            "presence": "Presence",
+            "status": {
+                "status": "status",
+                "dnd": "do not disturb",
+                "idle": "idle",
+                "offline": "offline",
+                "online": "online"
+            }
+        },
+        "statsCommands": []
+    },
+    "guildAdmin": {
+        "botDoesNotHavePermissionManageChannels": "Cannot enable this feature I don't have permission `MANAGE_MESSAGES`",
+        "botDoesNotHavePermissionBanMembers": "I don't have `BAN_MEMBERS`",
+        "botDoesNotHavePermissionKickMembers": "I don't have `KICK_MEMBERS`",
+        "botDoesNotHavePermissionManageMessages": "I don't have `MANAGE_MESSAGES`",
+        "cannotPerformActionOnUser": "Action cannot be performed on this user",
+        "memberHasBeenBaned": "&USER has been banned",
+        "youHaveBeenKicked": "You have been kicked from guild &GUILD_NAME &REASON",
+        "youHaveBeenBanned": "You have been banned from guild &GUILD_NAME &REASON",
+        "memberHasBeenRemoved": "&USER has been kicked",
+        "noPermissionManageMessage": "No permission `MANAGE_MESSAGES`",
+        "mentionMember": "Please mention member",
+        "noPermissionBanMembers": "You don't have permission `BAN_MEMBERS`",
+        "noPermissionKickMembers": "You don't have permission `KICK_MEMBERS`",
+        "newGuildLanguage": "Language has been change successfully. New Guild Language is: &LANGUAGE_NAME",
+        "languageCommandList": "No. You can only choose languages tha are available. &LANGUAGES",
+        "unsubscribedSuccessfully": "You have unsubscribed &CHANNEL from &SERVICE_NAME.",
+        "alreadySubscribed": "You have already subscribed &CHANNEL to &SERVICE_NAME.",
+        "noPermissionManageChannels": "You don't have permission `MANAGE_CHANNELS`.",
+        "prefixLongerThanFiveCharacters": "Prefix cannot be longer than 5 characters.",
+        "guildLanguageHasBeenSwitched": "Language has been switched to &LANGUAGE.",
+        "subscribedSuccessfully": "You have subscribed &CHANNEL to &SERVICE_NAME.",
+        "sameLanguage": "Nothing changed. Guild is already using `&LANGUAGE_NAME`.",
+        "youAreNoGuildAdmin": "You are not admin you cannot use this commands.",
+        "noPermissionManageGuild": "You don't have permission `MANAGE_GUILD`.",
+        "prefixChanged": "Guild prefix has been changed to `&PREFIX`.",
+        "unknownError": "An error occurred. Please try again later.",
+        "notSubscribed": "This &CHANNEL isn't subscribed to &SERVICE_NAME",
+        "incorrectUse": "Thats not how it works. Please check help command.",
+        "ponyImagesInfo": "This channel twice per day receive pony images",
+        "ponyTownUpdatesInfo": "Bot will send in this channel whenever ponytown updates",
+        "autoUnitConversionInfo": "This feature will check every message sent by user. And if it detects that message contains unit its going to automatically convert to metric or imperial",
+        "swearPreventionInfo": "This feature will check every message sent by user and if it detects that message contains swear it is going to delete it. This feature does not work in NSFW channels",
+        "availableLanguages": "Available languages: &LANGUAGES.",
+        "ponyImages": "Pony image service.",
+        "updatesPT": "Pony town updates service.",
+        "specifyPrefix": "Please provide prefix.",
+        "unsubscribe": [
+            "unsubscribe"
+        ],
+        "subscribe": [
+            "subscribe"
+        ],
+        "autoConversion": "Auto conversion",
+        "swearProtection": "Swear protection",
+        "featureDisabled": "&FEATURE has been disabled",
+        "featureEnabled": "&FEATURE has been enabled",
+        "featureAlreadyDisabled": "&FEATURE is already disabled",
+        "featureAlreadyEnabled": "&FEATURE is already enabled",
+        "true": [
+            "on",
+            "true",
+            "yes"
+        ],
+        "false": [
+            "off",
+            "false",
+            "no"
+        ],
+        "commands": {
+            "changeLanguage": [],
+            "changePrefix": [],
+            "subscribeToPTUpdates": [],
+            "subscribeToPonyImages": [],
+            "swearPrevention": [],
+            "autoConversion": [],
+            "purge": [],
+            "ban": [],
+            "kick": []
+        }
+    },
+    "miscellaneous": {
+        "boops": "boops",
+        "hugs": "hugs",
+        "kisses": "kisses",
+        "ambiguous": "`&QUERY` is ambiguous",
+        "userNotFound": "Cannot find user: `&QUERY`",
+        "nothingFound": "`&QUERY` cannot be found. Try with &AVAILABLE",
+        "ping": {
+            "api": "Api: ",
+            "network": "Network: ",
+            "server": "Server: "
+        },
+        "commands": {
+            "boop": [],
+            "hug": [],
+            "kiss": [],
+            "ping": [],
+            "facts": [],
+            "jokes": []
+        }
+    },
+    "jokesFacts": {
+        "noFact": "Sorry but there aren't any fact available in your language.",
+        "facts": {
+            "fun": [
+                "Banging your head against a wall for one hour burns 150 calories.",
+                "Pteronophobia is the fear of being tickled by feathers.",
+                "snakes can help predict earthquakes."
+            ],
+            "animal": [
+                "The heart of a shrimp is located in its head.",
+                "A snail can sleep for three years.",
+                "The fingerprints of a koala are so indistinguishable from humans that they have on occasion been confused at a crime scene.",
+                "slugs have four noses."
+            ],
+            "chocolate": [
+                "Chocolate comes from a fruit tree; it’s made from a seed.",
+                "It takes 400 cocoa beans to make one pound (0.45kg) of chocolate.",
+                "Each cacao tree produces approximately 2,500 beans.",
+                "Cacao beans were so valuable to early Mesoamericans that they were used as currency."
+            ]
+        },
+        "noJokes": "Sorry but there aren't any jokes available in your language.",
+        "jokes": {
+            "dad": [
+                "Did you hear about the restaurant on the moon? Great food, no atmosphere.",
+                "What do you call a fake noodle? An Impasta.",
+                "How many apples grow on a tree? All of them."
+            ],
+            "funny": [
+                "Today at the bank, an old lady asked me to help check her balance. So I pushed her over.",
+                "I bought some shoes from a drug dealer. I don't know what he laced them with, but I've been tripping all day.",
+                "I told my girlfriend she drew her eyebrows too high. She seemed surprised.",
+                "My dog used to chase people on a bike a lot. It got so bad, finally I had to take his bike away."
+            ],
+            "blond": [
+                "Blonde: What does IDK stand for?  Brunette: I don’t know ,  Blonde: Why doesn’t anyone know!",
+                "Why can't a blonde dial 911? She can't find the eleven.",
+                "How come it takes so long to build a blonde snowman? Because you have to hollow out the head."
+            ]
+        }
+    }
+}

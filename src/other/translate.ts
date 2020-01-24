@@ -1,160 +1,127 @@
-import { Message, RichEmbed } from "discord.js";
-import { prefix } from "./guildPrefix";
-import { DataBase } from "./DataBase";
-import { embedSend } from './sendMessage';
-import * as tran from '@k3rn31p4nic/google-translate-api';
+import { Message } from 'discord.js';
+import { TranslateCommands, Language } from '../language/langTypes';
+import { checkCommand, removePrefixAndCommand, getCommandArgs } from '../until/commandsHandler';
+import { getLanguage } from '../until/guild';
+import { removeFirstWord, hasPermissionInChannel } from '../until/util';
+import { signEmbed, removeMarkup, stringifyEmbed } from '../until/embeds';
+const tran = require('@k3rn31p4nic/google-translate-api');
 
-const translateName = "Google translate";
-const url = "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Google_Translate_logo.svg/1200px-Google_Translate_logo.svg.png";
+const TRANSLATE_NAME = 'Google translate';
+const ICON = 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Google_Translate_logo.svg/1200px-Google_Translate_logo.svg.png';
+const URL = 'https://translate.google.com/';
 
-const langs = ['af', 'sq', 'am', 'ar', 'hy', 'az', 'eu', 'be', 'bn', 'bs', 'bg', 'ca', 'ceb', 'ny', 'zh-cn', 'zh-tw', 'co', 'hr', 'cs', 'da', 'nl', 'en', 'eo', 'et', 'tl', 'fi', 'fr', 'fy', 'gl', 'ka', 'de', 'el', 'gu', 'ht', 'ha', 'haw', 'iw', 'hi', 'hmn', 'hu', 'is', 'ig', 'id', 'ga', 'it', 'ja', 'jw', 'kn', 'kk', 'km', 'ko', 'ku', 'ky', 'lo', 'la', 'lv', 'lt', 'lb', 'mk', 'mg', 'ms', 'ml', 'mt', 'mi', 'mr', 'mn', 'my', 'ne', 'no', 'ps', 'fa', 'pl', 'pt', 'pa', 'ro', 'ru', 'sm', 'gd', 'sr', 'st', 'sn', 'sd', 'si', 'sk', 'sl', 'so', 'es', 'su', 'sw', 'sv', 'tg', 'ta', 'te', 'th', 'tr', 'uk', 'ur', 'uz', 'vi', 'cy', 'xh', 'yi', 'yo', 'zu',];
-const langFullName = ['Afrikaans', 'Albanian', 'Amharic', 'Arabic', 'Armenian', 'Azerbaijani', 'Basque', 'Belarusian', 'Bengali', 'Bosnian', 'Bulgarian', 'Catalan', 'Cebuano', 'Chichewa', 'Chinese Simplified', 'Chinese Traditional', 'Corsican', 'Croatian', 'Czech', 'Danish', 'Dutch', 'English', 'Esperanto', 'Estonian', 'Filipino', 'Finnish', 'French', 'Frisian', 'Galician', 'Georgian', 'German', 'Greek', 'Gujarati', 'Haitian Creole', 'Hausa', 'Hawaiian', 'Hebrew', 'Hindi', 'Hmong', 'Hungarian', 'Icelandic', 'Igbo', 'Indonesian', 'Irish', 'Italian', 'Japanese', 'Javanese', 'Kannada', 'Kazakh', 'Khmer', 'Korean', 'Kurdish (Kurmanji)', 'Kyrgyz', 'Lao', 'Latin', 'Latvian', 'Lithuanian', 'Luxembourgish', 'Macedonian', 'Malagasy', 'Malay', 'Malayalam', 'Maltese', 'Maori', 'Marathi', 'Mongolian', 'Myanmar (Burmese)', 'Nepali', 'Norwegian', 'Pashto', 'Persian', 'Polish', 'Portuguese', 'Punjabi', 'Romanian', 'Russian', 'Samoan', 'Scots Gaelic', 'Serbian', 'Sesotho', 'Shona', 'Sindhi', 'Sinhala', 'Slovak', 'Slovenian', 'Somali', 'Spanish', 'Sundanese', 'Swahili', 'Swedish', 'Tajik', 'Tamil', 'Telugu', 'Thai', 'Turkish', 'Ukrainian', 'Urdu', 'Uzbek', 'Vietnamese', 'Welsh', 'Xhosa', 'Yiddish', 'Yoruba', 'Zulu'];
+const langs = ['af', 'sq', 'am', 'ar', 'hy', 'az', 'eu', 'be', 'bn', 'bs', 'bg', 'ca', 'ceb', 'ny', 'zh-cn', 'zh-tw', 'co', 'hr', 'cs', 'da', 'nl', 'en', 'eo', 'et', 'tl', 'fi', 'fr', 'fy', 'gl', 'ka', 'de', 'el', 'gu', 'ht', 'ha', 'haw', 'iw', 'hi', 'hmn', 'hu', 'is', 'ig', 'id', 'ga', 'it', 'ja', 'jw', 'kn', 'kk', 'km', 'ko', 'ku', 'ky', 'lo', 'la', 'lv', 'lt', 'lb', 'mk', 'mg', 'ms', 'ml', 'mt', 'mi', 'mr', 'mn', 'my', 'ne', 'no', 'ps', 'fa', 'pl', 'pt', 'pa', 'ro', 'ru', 'sm', 'gd', 'sr', 'st', 'sn', 'sd', 'si', 'sk', 'sl', 'so', 'es', 'su', 'sw', 'sv', 'tg', 'ta', 'te', 'th', 'tr', 'uk', 'ur', 'uz', 'vi', 'cy', 'xh', 'yi', 'yo', 'zu', 'zh-cn'];
+const langFullName = ['Afrikaans', 'Albanian', 'Amharic', 'Arabic', 'Armenian', 'Azerbaijani', 'Basque', 'Belarusian', 'Bengali', 'Bosnian', 'Bulgarian', 'Catalan', 'Cebuano', 'Chichewa', 'Chinese Simplified', 'Chinese Traditional', 'Corsican', 'Croatian', 'Czech', 'Danish', 'Dutch', 'English', 'Esperanto', 'Estonian', 'Filipino', 'Finnish', 'French', 'Frisian', 'Galician', 'Georgian', 'German', 'Greek', 'Gujarati', 'Haitian Creole', 'Hausa', 'Hawaiian', 'Hebrew', 'Hindi', 'Hmong', 'Hungarian', 'Icelandic', 'Igbo', 'Indonesian', 'Irish', 'Italian', 'Japanese', 'Javanese', 'Kannada', 'Kazakh', 'Khmer', 'Korean', 'Kurdish (Kurmanji)', 'Kyrgyz', 'Lao', 'Latin', 'Latvian', 'Lithuanian', 'Luxembourgish', 'Macedonian', 'Malagasy', 'Malay', 'Malayalam', 'Maltese', 'Maori', 'Marathi', 'Mongolian', 'Myanmar (Burmese)', 'Nepali', 'Norwegian', 'Pashto', 'Persian', 'Polish', 'Portuguese', 'Punjabi', 'Romanian', 'Russian', 'Samoan', 'Scots Gaelic', 'Serbian', 'Sesotho', 'Shona', 'Sindhi', 'Sinhala', 'Slovak', 'Slovenian', 'Somali', 'Spanish', 'Sundanese', 'Swahili', 'Swedish', 'Tajik', 'Tamil', 'Telugu', 'Thai', 'Turkish', 'Ukrainian', 'Urdu', 'Uzbek', 'Vietnamese', 'Welsh', 'Xhosa', 'Yiddish', 'Yoruba', 'Zulu', 'Chinese'];
 
-interface translateOptions {
-    message: Message;
-    lang: string;
-    trmsg: string;
-    language: any;
-    embed: RichEmbed;
+export const TRANSLATE_COMMANDS: TranslateCommands = ['translate', 'tr'];
+
+interface TranslateResult {
+
+    text: string;
+    from: {
+        language: {
+            didYouMean: boolean,
+            iso: string;
+        },
+        text: {
+            autoCorrected: boolean,
+            value: string,
+            didYouMean: boolean;
+        };
+    };
+    raw: string;
+
 }
-
-
 
 export function translate(message: Message): boolean {
-    const p = prefix(message).toLowerCase();
-    if (!p) return false;
-    if (!p.startsWith('tr') && !p.startsWith('translate')) return false;
-    let language = message.guild ? DataBase.getLang()[DataBase.getGuildLang(message.guild)].translate : DataBase.getLang()['en'].translate;
-
-    const embed = new RichEmbed();
-    embed.setAuthor(translateName, url);
-    embed.setColor([62, 130, 247]);
-
-
-    if (p === 'translate' || p === 'tr') {
-        let prefix = DataBase.getPrefix(message.guild);
-        embed.addField(language.help, prefix + language.command);
-
-        embedSend(message.channel, embed);
-        return true;
-    };
-
-    let msg = p.replace(/  +/g, ' ');
-    let args = msg.split(' ');
-    msg = msg.slice(args[0].length + args[1].length + 1, msg.length).trim();
-
-    if (!msg) {
-        embed.addField(language.error, language.msgNotFound);
-
-        embedSend(message.channel, embed);
+    const language = getLanguage(message.guild);
+    if (checkCommand(message, [...language.translate.commands, ...TRANSLATE_COMMANDS])) {
+        actuallyTranslate(message, language);
         return true;
     }
-
-    let tr: translateOptions = {
-        message: message,
-        lang: args[1].toLowerCase(),
-        trmsg: msg,
-        language: language,
-        embed: embed,
-    }
-
-    const lang = args[1].toLowerCase();
-    translateMessage(tr);
-
-    return true;
+    return false;
 }
 
+async function actuallyTranslate(message: Message, language: Language) {
+    let content = removePrefixAndCommand(message);
+    const args = getCommandArgs(message);
 
-
-//translation mehanic
-async function translateMessage(tro: translateOptions) {
-
-    tro.message.channel.startTyping();
-
-
-    //If user specify full name...we convert it to short and and translate
-    if (langFullName.includes(capitalize(tro.lang))) tro.lang = fullNameToShortOne(tro.lang);
-
-    if (!langs.includes(tro.lang)) {
-
-        await returnTranslation(tro.lang, 'en', true).then((x: string) => {
-            tro.lang = x.toLowerCase();
-        }).catch(() => { });
-
-        if (langFullName.includes(capitalize(tro.lang))) tro.lang = fullNameToShortOne(tro.lang);
-    }
-
-    //If user specify short message we transalte and return message
-    if (langs.includes(tro.lang)) return sendMsg(tro);
-    else return errorMsg(tro);
-}
-
-async function sendMsg(tro: translateOptions) {
-    tro.message.channel.stopTyping();
-    console.log(tro.trmsg, tro.lang)
-
-    await returnTranslation(tro.trmsg, tro.lang).then((x: any) => {
-
-        tro.embed.addField(`${tro.language.translatedTo} ${x.titleText}`, x.translation)
-        embedSend(tro.message.channel, tro.embed);
-
-    }).catch(err => {
-        console.log('test')
-        tro.embed.addField(tro.language.error, err.message)
-        tro.embed.setColor("RED")
-        embedSend(tro.message.channel, tro.embed);
-    });
-}
-
-function errorMsg(tro: translateOptions) {
-    tro.message.channel.stopTyping();
-    tro.embed.setColor("RED")
-    tro.embed.addField(tro.language.langError, tro.language.languageError);
-    embedSend(tro.message.channel, tro.embed)
-    return true;
-}
-
-//replace long language name with shot one and transalte
-function fullNameToShortOne(langName: string) {
-    for (let l in langFullName) {
-        if (langFullName[l].toLowerCase() === langName.toLowerCase()) {
-            return langs[l];
-        }
-    }
-    return langName;
-}
-
-
-//translate text and return
-function returnTranslation(text, langName, langTranslate = false) {
-    return new Promise((resolve, reject) => {
-
-        for (let l in langs) {
-            if (langs[l] === langName) {
-
-                //@ts-ignore
-                tran(text, { to: langName })
-                    .then(res => {
-                        if (langTranslate) {
-                            resolve(res.text.toString());
-                        } else {
-                            resolve({
-                                //@ts-ignore
-                                titleText: `${langFullName[l]}`,
-                                translation: res.text.toString()
-                            });
-                        }
-
-
-                    }).catch(err => {
-                        reject(err);
-                    });
+    let toLang = 'en';
+    if (langs.includes(args[0].toLowerCase())) toLang = args[0];
+    else if (langFullName.map(l => l.toLowerCase()).includes(args[0])) {
+        toLang = fullNameToShortOne(args[0]);
+        content = removeFirstWord(content);
+    } else {
+        const specialLanguage = langFullName.filter(l => l.indexOf(' ') !== -1);
+        if (specialLanguage.map(m => m.slice(0, m.indexOf(' ')).includes(args[0]))) {
+            const langISO = specialLanguage.find(e => e.toLowerCase().includes(`${args[0]} ${args[1]}`));
+            if (langISO) {
+                toLang = fullNameToShortOne(langISO);
+                content = removeFirstWord(content);
+                content = removeFirstWord(content);
             }
         }
+    }
+
+    if (!content.trim()) {
+        message.channel.send(`⛔ ${language.translate.nothingToTranslate}`);
+        return;
+    }
+    await message.channel.startTyping();
+    try {
+        const translation = await translateMessage(toLang, content);
+        await message.channel.stopTyping();
+        sendTranslation(message, shortNameToFullOne(toLang), translation, language);
+
+    } catch (error) {
+        await message.channel.stopTyping();
+        message.channel.send(error);
+        return;
+    }
+}
+
+function translateMessage(lang: string, text: string): Promise<TranslateResult> {
+    return new Promise((resolve, reject) => {
+        tran(text, { to: lang })
+            .then((res: TranslateResult) => {
+                resolve(res);
+            }).catch((err: any) => {
+                reject(err);
+            });
     });
 }
 
-function capitalize(s) {
-    if (typeof s !== 'string') return '';
-    return s.charAt(0).toUpperCase() + s.slice(1);
+async function sendTranslation(message: Message, toLang: string, result: TranslateResult, language: Language) {
+    const embed = signEmbed(message.client);
+    try {
+        embed.setColor('4b8df5');
+        embed.setDescription(`**${shortNameToFullOne(result.from.language.iso)}** --> **${toLang}**\n${removeMarkup(result.text, message.client)}`);
+        embed.setAuthor(TRANSLATE_NAME, ICON, URL);
+
+        if (hasPermissionInChannel(message.channel, 'EMBED_LINKS')) {
+            message.channel.send(embed);
+        } else {
+            message.channel.send(stringifyEmbed(embed, message.client));
+        }
+    } catch (error) {
+        message.channel.send(`⚠️ ${language.translate.somethingWentWrong}`);
+    }
+}
+
+function fullNameToShortOne(fullName: string) {
+    for (const i in langFullName) {
+        if (langFullName[i].toLowerCase() === fullName.toLowerCase()) {
+            return langs[i];
+        }
+    }
+    return fullName;
+}
+
+function shortNameToFullOne(shortName: string) {
+    for (const i in langs) {
+        if (langs[i].toLowerCase() === shortName.toLowerCase()) {
+            return langFullName[i];
+        }
+    }
+    return shortName;
 }
