@@ -14,7 +14,7 @@ import { stringifyEmbed } from '../../until/embeds';
 const ColorThief = require('color-thief-jimp');
 
 // https://discord.gg/HPvbWYp
-export const ternsCodeLab = new CustomGuildScript('621726901420949504');
+export const ternsCodeLab = new CustomGuildScript('560542969896239105');
 
 ternsCodeLab.on('message', (message, doNotExecuteOtherCommands) => {
     if (help(message)) return doNotExecuteOtherCommands();
