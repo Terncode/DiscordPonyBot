@@ -1,12 +1,12 @@
-import { Client, RichEmbed, Guild } from 'discord.js';
+import { Client, MessageEmbed, Guild } from 'discord.js';
 export function signEmbed(client: Client) {
-    const embed = new RichEmbed();
-    embed.setFooter(client.user.tag, client.user.displayAvatarURL);
+    const embed = new MessageEmbed();
+    embed.setFooter(client.user!.tag, client.user!.displayAvatarURL());
     embed.setTimestamp(Date.now());
     return embed;
 }
 
-export function stringifyEmbed(embed: RichEmbed, client: Client, guild?: Guild) {
+export function stringifyEmbed(embed: MessageEmbed, client: Client, guild?: Guild | null) {
     const markup = '```';
     let content = '';
 
@@ -21,7 +21,7 @@ export function stringifyEmbed(embed: RichEmbed, client: Client, guild?: Guild) 
     return `${markup}\n${content}${markup}`;
 }
 
-export function removeMarkup(text: string, client: Client, guild?: Guild) {
+export function removeMarkup(text: string, client: Client, guild?: Guild | null) {
     if (!text) return text;
     const underlines = text.match(/__[\S]*__/gi);
     if (underlines)
@@ -81,11 +81,11 @@ export function removeMarkup(text: string, client: Client, guild?: Guild) {
             for (const user of users) {
                 const id = user.replace(/[<@!>]/g, '');
                 let guildUser = null;
-                if (guild) guildUser = guild.members.find(u => u.user.id === id);
+                if (guild) guildUser = guild.members.cache.find(u => u.user.id === id);
                 if (guildUser) {
                     text = text.replace(user, guildUser.displayName);
                 } else {
-                    const discordUser = client.users.find(u => u.id === id);
+                    const discordUser = client.users.cache.find(u => u.id === id);
                     if (discordUser) text = text.replace(user, discordUser.tag);
                 }
             }
@@ -95,7 +95,7 @@ export function removeMarkup(text: string, client: Client, guild?: Guild) {
         if (channels)
             for (const channel of channels) {
                 const id = channel.replace(/[<#!\>]/g, '');
-                const guildChannel = guild.channels.find(c => c.id === id);
+                const guildChannel = guild.channels.cache.find(c => c.id === id);
                 if (guildChannel)
                     text = text.replace(channel, guildChannel.name);
             }

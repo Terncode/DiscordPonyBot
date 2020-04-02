@@ -1,10 +1,13 @@
-import { Message, GuildMember } from 'discord.js';
+import { Message, GuildMember, version as discordVersion } from 'discord.js';
 import { getLanguage, findGuildMembers } from '../../until/guild';
 import { checkCommand, removePrefixAndCommand } from '../../until/commandsHandler';
 import { MiscellaneousCommands, Language } from '../../language/langTypes';
 import { removeMarkup } from '../../until/embeds';
 import { hasPermissionInChannel } from '../../until/util';
 import { reportErrorToOwner } from '../../until/errors';
+import { version as nodeVersion } from 'process';
+import { version, supportServer } from '../..';
+//import { version } from '../..';
 
 export const MISCELLANEOUS_COMMANDS: MiscellaneousCommands = {
     boop: ['boop', 'boops'],
@@ -14,6 +17,8 @@ export const MISCELLANEOUS_COMMANDS: MiscellaneousCommands = {
     jokes: ['joke', 'jokes'],
     ping: ['ping'],
 };
+export const versionCommand = ['version'];
+export const support = ['support'];
 
 export function miscellaneous(message: Message): boolean {
     const language = getLanguage(message.guild);
@@ -37,6 +42,18 @@ export function miscellaneous(message: Message): boolean {
     } else if (checkCommand(message, [...language.miscellaneous.commands.ping, ...MISCELLANEOUS_COMMANDS.ping])) {
         ping(message, language);
         return true;
+    } else if (checkCommand(message, versionCommand)) {
+        const versionContent = [
+            `Node version: ${nodeVersion}`,
+            `Discord.js version: ${discordVersion}`,
+            `Bot version: ${version}`,
+        ].join('\n');
+
+        message.channel.send(versionContent);
+        return true;
+    } else if (checkCommand(message, support)) {
+        message.channel.send(supportServer);
+        return true;
     } else return false;
 }
 
@@ -44,7 +61,8 @@ function action(message: Message, language: Language, text: string) {
     const msgContent = removePrefixAndCommand(message);
 
     if (msgContent && message.guild) {
-        let guildMembers: GuildMember[] | null = message.mentions.members.map(m => m);
+        const mentionsCollections = message.mentions.members;
+        let guildMembers: GuildMember[] | null = mentionsCollections ? mentionsCollections.map(m => m) : null;
         if (!guildMembers || !guildMembers.length)
             guildMembers = findGuildMembers(msgContent, message.guild);
         if (!guildMembers) return language.miscellaneous.userNotFound.replace(/&QUERY/g, msgContent);
@@ -67,7 +85,7 @@ function randomJokeOrFact(message: Message, language: Language, factOrJoke: 'fac
     if (content) {
         if (language.jokesFacts.jokes[content])
             return [foj[content][ranIntAry(foj[content].length)], true];
-        else return [`${language.miscellaneous.nothingFound.replace(/&QUERY/g, content).replace(/&AVAILABLE/g, `\`${Object.keys(foj).join('\`, \`')}\``)}`, false];
+        else return [`${language.miscellaneous.nothingFound.replace(/&QUERY/g, content).replace(/&AVAILABLE/g, `\`${Object.keys(foj).join('`, `')}\``)}`, false];
     }
     const factKeys = Object.keys(foj);
     const type = factKeys[ranIntAry(factKeys.length)];
@@ -101,7 +119,7 @@ function ping(message: Message, language: Language) {
             else msg = m;
             const ping1 = Math.floor(editedNow - now);
             const ping2 = Math.floor(msg.createdTimestamp - message.createdTimestamp);
-            const ping3 = Math.floor(message.client.ping);
+            const ping3 = Math.floor(message.client.ws.ping);
             const { ping } = language.miscellaneous;
             msg.edit(`${ping.network}${ping1}ms\n${ping.server}${ping2}ms\n${ping.api}${ping3}ms\n`);
         });

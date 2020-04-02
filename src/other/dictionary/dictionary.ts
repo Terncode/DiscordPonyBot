@@ -1,24 +1,26 @@
 import { getLanguage } from '../../until/guild';
-import { Message, RichEmbed } from 'discord.js';
+import { Message, MessageEmbed } from 'discord.js';
 import { DictionaryCommands } from '../../language/langTypes';
 import { checkCommand, removePrefixAndCommand } from '../../until/commandsHandler';
 import { cambridgeDictionary, CambridgeDictionaryResult } from './cambridgeDictionary';
 import { signEmbed } from '../../until/embeds';
 import { hasPermissionInChannel } from '../../until/util';
+import { reportErrorToOwner } from '../../until/errors';
 const getDef = require('word-definition');
 
-const USER_CAMBRIDGE = true; // Disable if there is problem with cambridge
+const USE_CAMBRIDGE = true; // Disable if there is problem with cambridge
 const CAMBRIDGE_DICTIONARY_ICON = 'https://banner2.cleanpng.com/20180614/xav/kisspng-cambridge-advanced-learner-s-dictionary-university-cambridge-english-first-5b23346b1f9af1.3991183215290338351295.jpg';
 const DICTIONARY_ICON = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSJuyaXUT9CDxfoxAhEOZXAs0JT1YinMGz5dOkzTwlfBmpnBre9Cw';
 
 export const DICTIONARY_COMMANDS: DictionaryCommands = ['dictionary', 'explain', 'definition', 'define'];
+const coolDown = new Set<string>();
 
 export function dictionary(message: Message): boolean {
     const language = getLanguage(message.guild);
 
     if (checkCommand(message, [...language.dictionary.commands, ...DICTIONARY_COMMANDS])) {
         if (hasPermissionInChannel(message.channel, 'EMBED_LINKS')) {
-            if (USER_CAMBRIDGE) cambridgeWord(message);
+            if (USE_CAMBRIDGE) cambridgeWord(message);
             else normalWord(message);
         } else {
             message.channel.send(`⚠️ ${language.dictionary.missingPermissionEmbedLinks}`);
@@ -29,8 +31,11 @@ export function dictionary(message: Message): boolean {
 }
 
 async function cambridgeWord(message: Message) {
+    const id = message.guild ? message.guild.id : message.author.id;
+    if (coolDown.has(id)) return;
+    coolDown.add(id);
     const language = getLanguage(message.guild);
-    await message.channel.startTyping();
+    message.channel.startTyping();
 
     const content = removePrefixAndCommand(message).toLowerCase();
     try {
@@ -43,17 +48,21 @@ async function cambridgeWord(message: Message) {
         await message.channel.stopTyping();
         message.channel.send(`⚠️ ${language.dictionary.noResult}`);
     }
-
+    coolDown.delete(id);
 }
 
 async function normalWord(message: Message) {
+    const id = message.guild ? message.guild.id : message.author.id;
+    if (coolDown.has(id)) return;
+    coolDown.add(id);
     const language = getLanguage(message.guild);
-    await message.channel.startTyping();
+    message.channel.startTyping();
 
     const content = removePrefixAndCommand(message).toLowerCase();
     getDef(content, 'en', null, async (definition: any) => {
         if (definition.err !== undefined) {
             message.channel.send(`⚠️ ${language.dictionary.noResult}`);
+            coolDown.delete(id);
             return;
         } else {
             try {
@@ -63,15 +72,16 @@ async function normalWord(message: Message) {
                 embed.setDescription(definition.definition.length > 2000 ? `**Definition:**\n${definition.definition}...` : `**Definition:**\n${definition.definition}`);
                 embed.setColor('WHITE');
                 await message.channel.stopTyping();
-                message.channel.send(embed);
-            } catch (err) {
-                console.error(err);
+                await message.channel.send(embed);
+            } catch (error) {
+                reportErrorToOwner(message.client, error, 'normal word dictionary')
             }
         }
     });
+    coolDown.delete(id);
 }
 
-function cambridgeEmbed(embed: RichEmbed, cb: CambridgeDictionaryResult): RichEmbed {
+function cambridgeEmbed(embed: MessageEmbed, cb: CambridgeDictionaryResult): MessageEmbed {
     const entry = cb.results[0];
 
     embed.setAuthor('Cambridge Dictionary', CAMBRIDGE_DICTIONARY_ICON, 'https://dictionary.cambridge.org/');

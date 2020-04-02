@@ -86,7 +86,7 @@ export const ENGLISH: Language = {
     },
     help: {
         title: 'Help',
-        prefix: 'My prefix in this guild is: \`&PREFIX\`',
+        prefix: 'My prefix in this guild is: `&PREFIX`',
         notAdminHelp: 'You are not admin or moderator. Use of this command is useless for you',
         adminHelp: '&PREFIX&COMMAND - admin help',
         help: '&PREFIX&COMMAND - shows help',
@@ -236,6 +236,7 @@ export const ENGLISH: Language = {
             purge: [],
             ban: [],
             kick: [],
+            purgeAll: [],
         },
     },
     miscellaneous: {
@@ -243,7 +244,7 @@ export const ENGLISH: Language = {
         hugs: 'hugs',
         kisses: 'kisses',
         ambiguous: '`&QUERY` is ambiguous',
-        userNotFound: 'Cannot find user: \`&QUERY\`',
+        userNotFound: 'Cannot find user: `&QUERY`',
         nothingFound: '`&QUERY` cannot be found. Try with &AVAILABLE',
         ping: {
             api: 'Api: ',

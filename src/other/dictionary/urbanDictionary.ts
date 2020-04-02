@@ -1,4 +1,4 @@
-import { Message, RichEmbed, TextChannel } from 'discord.js';
+import { Message, MessageEmbed, TextChannel } from 'discord.js';
 import { getLanguage } from '../../until/guild';
 import { UrbanDictionaryCommands } from '../../language/langTypes';
 import { checkCommand, removePrefixAndCommand } from '../../until/commandsHandler';
@@ -11,6 +11,7 @@ const URBAN_DICTIONARY_ICON = 'https://firebounty.com/image/635-urban-dictionary
 const URBAN_DICTIONARY_URL = 'https://www.urbandictionary.com';
 
 export const URBAN_DICTIONARY_COMMANDS: UrbanDictionaryCommands = ['urbandictionary', 'urban'];
+const coolDown = new Set<string>();
 
 export function urbanDictionary(message: Message, allowInSFW = false): boolean {
     const language = getLanguage(message.guild);
@@ -34,6 +35,9 @@ export function urbanDictionary(message: Message, allowInSFW = false): boolean {
 }
 
 function getWord(message: Message) {
+    const id = message.guild ? message.guild.id : message.author.id;
+    if (coolDown.has(id)) return;
+    coolDown.add(id);
     const content = removePrefixAndCommand(message).toLowerCase();
     const language = getLanguage(message.guild);
 
@@ -71,11 +75,12 @@ function getWord(message: Message) {
             message.channel.send(embed);
         } else message.channel.send(stringifyEmbed(embed, message.client, message.guild));
     });
+    coolDown.delete(id);
 }
 
 function errorEmbed(message: Message, details: string) {
     const language = getLanguage(message.guild);
-    const embed = new RichEmbed();
+    const embed = new MessageEmbed();
 
     embed.setColor('red');
     embed.setTitle(language.urbanDictionary.error);

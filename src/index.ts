@@ -1,4 +1,4 @@
-import { Client, PresenceStatus, Message } from 'discord.js';
+import { Client, Message, PresenceStatusData } from 'discord.js';
 import { onMessage, onStartUp, guildMemberAdd, guildMemberRemove, onShutDown, guildBanAdd, guildBanRemove } from './main';
 import { clientGuildJoin } from './other/joinLeaves';
 import { Config } from './interfaces';
@@ -11,10 +11,11 @@ import { PTUpdateChecker } from './other/ptown/updateChecker';
 
 let idleTimeout: NodeJS.Timeout | undefined;
 export const client = new Client();
-export const version = 'v24.1.2020 Build v1';
+export const version = 'v31/03/2020';
 export let inviteLink: string;
 export let config: Config;
 export let ptChecker: PTUpdateChecker;
+export const supportServer = 'https://discord.gg/HPvbWYp';
 
 let shouldUpdateActivity = true;
 let ready = false;
@@ -26,20 +27,22 @@ try {
         TOKEN: process.env.BOT_TOKEN || '',
         DEBUG: !!process.env.DEBUG,
         OWNER_ID: process.env.OWNER_ID,
-        PREFIX: process.env.OWNER_ID || '-',
+        PREFIX: process.env.PREFIX || '-',
         DB_CONNECTION_STRING: process.env.DB_CONNECTION_STRING || '',
         PT_UPDATER_DOMAIN: process.env.PT_UPDATER_DOMAIN || undefined,
-        PT_UPDATER_LOGO: process.env.LOGO || undefined,
+        PT_UPDATER_LOGO: process.env.PT_UPDATER_LOGO || undefined,
         PT_UPDATER_NAME: process.env.PT_UPDATER_NAME || undefined,
     };
 }
-
+if (process.env.NODE_ENV !== 'production') {
+    console.log(JSON.stringify(config, undefined, 2));
+}
 client.on('ready', async () => {
     // setUp();
-    console.info(`loggined as ${client.user.tag}`);
-    console.info(`Access to ${client.guilds.size} guilds`);
+    console.info(`loggined as ${client.user!.tag}`);
+    console.info(`Access to ${client.guilds.cache.size} guilds`);
     inviteLink = await client.generateInvite('ADMINISTRATOR');
-    if (client.user.bot) console.info(`Invite link: ${inviteLink}`);
+    if (client.user!.bot) console.info(`Invite link: ${inviteLink}`);
     updateActivity();
     onStartUp(client);
 });
@@ -83,27 +86,17 @@ export function idle(message: Message) {
     }, 150000);
 }
 
-export function setStatus(status?: PresenceStatus): Promise<void> {
-    return new Promise((resolve, reject) => {
-        if (!status) status = 'online';
-
-        client.user.setStatus(status)
-            .then(() => resolve())
-            .catch(err => reject(err));
-    });
+export async function setStatus(status?: PresenceStatusData): Promise<void> {
+    if (!status) status = 'online';
+    await client.user!.setStatus(status);
 }
 
-export function updateActivity(text?: string, type?: number | 'PLAYING' | 'STREAMING' | 'LISTENING' | 'WATCHING'): Promise<void> {
-    return new Promise((resolve, reject) => {
-        if (text || type) shouldUpdateActivity = false;
-        else shouldUpdateActivity = true;
-
-        text = text || `${config.PREFIX}help in ${client.guilds.size} Servers`;
-        type = type || 'WATCHING';
-        client.user.setActivity(text, {
-            type,
-        }).then(() => resolve()).catch(err => reject(err));
-    });
+export async function updateActivity(text?: string, type?: number | 'PLAYING' | 'STREAMING' | 'LISTENING' | 'WATCHING') {
+    if (text || type) shouldUpdateActivity = false;
+    else shouldUpdateActivity = true;
+    text = text || `${config.PREFIX}help in ${client.guilds.cache.size} Servers`;
+    type = type || 'WATCHING';
+    await client.user!.setActivity(text, { type });
 }
 
 export async function destroy() {
@@ -128,6 +121,7 @@ function startServices() {
             reportErrorToOwner(client, error);
         }
     });
+
     if (config.PT_UPDATER_NAME && config.PT_UPDATER_DOMAIN && config.PT_UPDATER_LOGO) {
         ptChecker = new PTUpdateChecker(config.PT_UPDATER_NAME, config.PT_UPDATER_DOMAIN, config.PT_UPDATER_LOGO);
         ptChecker.on('update', async (richEmbed, changeLog) => {

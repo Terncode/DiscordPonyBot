@@ -27,8 +27,8 @@ export function isBotOwner(user: User): boolean {
     return user.equals(owner);
 }
 
-export function getBotOwner(client: Client): User | null {
-    return client.users.find(u => u.id === config.OWNER_ID);
+export function getBotOwner(client: Client) {
+    return client.users.cache.find(u => u.id === config.OWNER_ID);
 }
 
 export function removeFirstWord(text: string): string {

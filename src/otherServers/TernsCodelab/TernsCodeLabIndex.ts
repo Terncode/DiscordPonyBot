@@ -1,4 +1,4 @@
-import { Message, GuildChannel, Guild, TextChannel, GuildMember, RichEmbed, DMChannel, GroupDMChannel } from 'discord.js';
+import { Message, GuildChannel, Guild, TextChannel, GuildMember, MessageEmbed, DMChannel, OverwriteResolvable, NewsChannel } from 'discord.js';
 
 import { CustomGuildScript } from '../CustomGuildScript';
 import { HELP_COMMANDS, helpEntries, sendHelpEmbed } from '../../other/misc/help';
@@ -11,6 +11,7 @@ import { roleManager } from './roleManager';
 import * as Jimp from 'jimp';
 import { version } from '../..';
 import { stringifyEmbed } from '../../until/embeds';
+import { reportErrorToOwner } from '../../until/errors';
 const ColorThief = require('color-thief-jimp');
 
 // https://discord.gg/HPvbWYp
@@ -60,28 +61,32 @@ function help(message: Message) {
     return false;
 }
 
-function removeQuietRole(message: Message) {
-    const guild = message.guild;
+async function removeQuietRole(message: Message) {
+    const guild = message.guild!;
     const user = message.author;
-    const guildMember = guild.members.find(m => m.id === user.id);
-    const quietRole = guildMember.roles.find(r => r.name.toLowerCase().includes('quiet'));
-    if (quietRole) guildMember.removeRole(quietRole).catch(() => {/* ignored */ });
+    const guildMember = guild.members.cache.find(m => m.id === user.id);
+    if (!guildMember) return;
+    const quietRole = guildMember.roles.cache.find(r => r.name.toLowerCase().includes('quiet'));
+    try {
+        if (quietRole) await guildMember.roles.remove(quietRole);
+    } catch (error) {
+        reportErrorToOwner(message.client, error, `Unable to remove quite role`);
+    }
 }
 
-function reactArt(message: Message) {
+async function reactArt(message: Message) {
     const channel = message.channel as GuildChannel;
     if (!channel.name.toLowerCase().includes('art') || message.attachments.size === 0) return;
 
     if (hasPermissionInChannel(message.channel, 'ADD_REACTIONS')) {
-        message.react('👍')
-            .then(() => {
-                message.react('👌')
-                    .then(() => {
-                        const neat = message.guild.emojis.find(r => r.name.toLowerCase() === 'neat');
-                        if (neat !== undefined)
-                            message.react(neat).catch(() => { /* ignored */ });
-                    });
-            });
+        try {
+            await message.react('👍')
+            await message.react('👌');
+            const neat = message.guild!.emojis.cache.find(r => r.name.toLowerCase() === 'neat');
+            if (neat) await message.react(neat);
+        } catch (error) {
+            reportErrorToOwner(message.client, error, `Message reaction failed`);
+        }
     }
 }
 export function autoDeleteChannel(message: Message) {
@@ -96,7 +101,7 @@ export function autoDeleteChannel(message: Message) {
     else if (channelName.includes('min')) deleteOnTime(message, time * 60);
 }
 
-function deleteOnTime(message: Message, time: number) {
+async function deleteOnTime(message: Message, time: number) {
     if (hasPermissionInChannel(message.channel, 'MANAGE_MESSAGES') && hasPermissionInChannel(message.channel, 'ADD_REACTIONS')) {
         const timeEmoji = ['🕛', '🕘', '🕕', '🕒'];
         const endEmoji = '❌';
@@ -104,14 +109,17 @@ function deleteOnTime(message: Message, time: number) {
         const timeSplit = time / timeEmoji.length;
         for (const i in timeEmoji) {
             setTimeout(() => {
-                message.react(timeEmoji[i]).catch(() => { /* ignore */ });
+                if (!message.deleted && hasPermissionInChannel(message.channel, 'ADD_REACTIONS'))
+                    message.react(timeEmoji[i]);
             }, timeSplit * parseInt(i));
         }
         setTimeout(() => {
-            message.react(endEmoji);
+            if (!message.deleted && hasPermissionInChannel(message.channel, 'ADD_REACTIONS'))
+                message.react(endEmoji);
         }, time - 5000);
         setTimeout(() => {
-            message.delete().catch(() => {/* ignored */ });
+            if (!message.deleted && hasPermissionInChannel(message.channel, 'MANAGE_MESSAGES'))
+                message.delete();
         }, time);
     }
 }
@@ -122,121 +130,146 @@ function reactSuggestion(message: Message) {
 
     if (message.content.length < 10) return false;
     if (hasPermissionInChannel(message.channel, 'ADD_REACTIONS')) {
-        message.react('👍').then(() => {
-            message.react('👎');
-        });
+        setTimeout(async () => {
+            try {
+                await message.react('👍');
+                await message.react('👎');
+            } catch (error) {
+                reportErrorToOwner(message.client, error, 'Unable to react');
+            }
+        }, 0);
+        return true;
     }
     return false;
 }
 
-export function enableServerFeature(guild: Guild): Promise<void> {
-    return new Promise(async (resolve) => {
+export async function enableServerFeature(guild: Guild) {
+    const deleteChannels = guild.channels.cache.filter(c => c.name.toLowerCase().includes('auto-delete') && c.type === 'text').map(c => c);
 
-        const deleteChannels = guild.channels.filter(c => c.name.toLowerCase().includes('auto-delete') && c.type === 'text').map(c => c);
+    const roleManager = guild.channels.cache.find(c => c.name.toLowerCase().includes('role-manager') && c.type === 'text');
+    const everyone = guild.roles.everyone;
+    if (!everyone) return;
+    const overwrites: OverwriteResolvable = {
+        id: everyone.id,
+        allow: 'SEND_MESSAGES'
+    }
 
-        const roleManager = guild.channels.find(c => c.name.toLowerCase().includes('role-manager') && c.type === 'text');
-        const defaultRole = guild.defaultRole;
-
-        if (deleteChannels.length !== 0)
-            for (const deleteChannel of deleteChannels) {
-                await deleteChannel.overwritePermissions(defaultRole, { 'SEND_MESSAGES': true }, 'Bot ShutDown')
-                    .then(() => { guild.client.emit('debug', `${deleteChannel.name} enabled sending message`); })
-                    .catch(err => console.error(err));
-            }
-        if (roleManager)
-            await roleManager.overwritePermissions(defaultRole, { 'SEND_MESSAGES': true }, 'Bot ShutDown')
-                .then(() => { guild.client.emit('debug', `${roleManager.name} enabled sending message`); })
-                .catch(err => console.error(err));
-        const prefix = getPrefix(guild);
-        await roleManager.setTopic(`${prefix}role[add / remove / request / suggest][Role name]`)
-            .then(() => { guild.client.emit('debug', `${roleManager.name} Topic Changed to '${prefix}role [add/remove/request/suggest] [Role name]'`); })
-            .catch(err => console.error(err));
-        resolve();
-    });
-}
-
-export function bootMessage(guild: Guild) {
-    const botLogs = guild.channels.find(c => c.name.toLowerCase().includes('bot-logs') && c.type === 'text') as TextChannel;
-    if (botLogs) botLogs.send(`Bot booted version: \`${version}\``).catch((err: any) => console.error(err));
-}
-
-export function disableServerFeatures(guild: Guild) {
-    return new Promise(async (resolve) => {
-
-        const deleteChannels = guild.channels.filter(c => c.name.toLowerCase().includes('auto-delete') && c.type === 'text').map(c => c) as TextChannel[];
-        const roleManager = guild.channels.find(c => c.name.toLowerCase().includes('role-manager') && c.type === 'text');
-        const defaultRole = guild.defaultRole;
-
+    if (deleteChannels.length !== 0)
         for (const deleteChannel of deleteChannels) {
-            await deleteChannel.overwritePermissions(defaultRole, { 'SEND_MESSAGES': false }, 'Bot ShutDown')
-                .then(() => guild.client.emit('debug', `${deleteChannel.name} disabled sending message`))
-                .catch(err => console.error(err));
-
-            const messages = await deleteChannel.fetchMessages({ limit: 100 }).catch(err => console.error(err));
-            if (!messages) continue;
-
-            const messageMap = messages.map(m => m);
-
-            if (messageMap.length !== 0) {
-                messageMap.forEach(message => {
-                    if (message.deletable) message.delete().catch(err => console.error(err));
-                });
+            try {
+                await deleteChannel.overwritePermissions([overwrites], 'Bot startup');
+                guild.client.emit('debug', `${deleteChannel.name} enabled sending message`);
+            } catch (error) {
+                console.error(error)
             }
         }
+    if (roleManager) {
+        try {
+            await roleManager.overwritePermissions([overwrites], 'Bot startup');
+            guild.client.emit('debug', `${roleManager.name} enabled sending message`);
+        } catch (error) {
+            console.error(error);
+        }
+        const prefix = getPrefix(guild);
+        try {
+            await roleManager.setTopic(`${prefix}role[add / remove / request / suggest][Role name]`)
+            guild.client.emit('debug', `${roleManager.name} Topic Changed to '${prefix}role [add/remove/request/suggest] [Role name]'`);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+}
 
-        if (roleManager)
-            await roleManager.overwritePermissions(defaultRole, { 'SEND_MESSAGES': false }, 'Bot ShutDown')
-                .catch(err => console.error(err));
-        await roleManager.setTopic("Bot offline. Channel doesn't work")
-            .catch(err => console.error(err));
-        resolve();
-    });
+export async function bootMessage(guild: Guild) {
+    const botLogs = guild.channels.cache.find(c => c.name.toLowerCase().includes('bot-logs') && c.type === 'text') as TextChannel;
+    try {
+        if (botLogs) await botLogs.send(`Bot booted version: \`${version}\``)
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+export async function disableServerFeatures(guild: Guild) {
+    const deleteChannels = guild.channels.cache.filter(c => c.name.toLowerCase().includes('auto-delete') && c.type === 'text').map(c => c) as TextChannel[];
+    const roleManager = guild.channels.cache.find(c => c.name.toLowerCase().includes('role-manager') && c.type === 'text');
+    const everyone = guild.roles.everyone;
+    if (!everyone) return;
+
+    const overwrites: OverwriteResolvable = {
+        id: everyone.id,
+        deny: 'SEND_MESSAGES'
+    }
+    for (const deleteChannel of deleteChannels) {
+        try {
+            await deleteChannel.overwritePermissions([overwrites], 'Bot shutdown');
+            guild.client.emit('debug', `${deleteChannel.name} disabled sending message`);
+        } catch (error) {
+            console.error(error);
+        }
+
+        if (!hasPermissionInChannel(deleteChannel, 'READ_MESSAGE_HISTORY')) return;
+        const messages = await deleteChannel.messages.fetch({ limit: 100 })
+        if (!messages) continue;
+
+        const messageMap = messages.map(m => m);
+
+        if (messageMap.length !== 0) {
+            messageMap.forEach(message => {
+                if (message.deletable) message.delete().catch(err => console.error(err));
+            });
+        }
+    }
+
+    if (roleManager && hasPermissionInChannel(roleManager, 'MANAGE_CHANNELS')) {
+        await roleManager.overwritePermissions([overwrites], 'Bot shutdown');
+        await roleManager.setTopic("Bot offline. Channel doesn't work");
+    }
 }
 
 export function shutDownMessage(guild: Guild): Promise<void> {
     return new Promise(async (resolve) => {
-        const botLogs = guild.channels.find(c => c.name.toLowerCase().includes('bot-logs') && c.type === 'text') as TextChannel;
+        const botLogs = guild.channels.cache.find(c => c.name.toLowerCase().includes('bot-logs') && c.type === 'text') as TextChannel;
         if (botLogs) await botLogs.send('Bot successfully shut down').catch(err => console.error(err));
         resolve();
     });
 }
 
-export function ternsCodeLabOnServerJoin(member: GuildMember) {
+export async function ternsCodeLabOnServerJoin(member: GuildMember) {
     if (member.user.bot) return false;
 
     const guild = member.guild;
-    const general = guild.channels.find(c => c.name.toLowerCase().includes('general') && c.type !== 'voice') as TextChannel;
-    const roleManager = guild.channels.find(c => c.name.toLowerCase().includes('role-manager')) as TextChannel;
+    const general = guild.channels.cache.find(c => c.name.toLowerCase().includes('general') && c.type !== 'voice') as TextChannel;
+    const roleManager = guild.channels.cache.find(c => c.name.toLowerCase().includes('role-manager')) as TextChannel;
 
-    const embed = new RichEmbed();
-    embed.setAuthor(guild.name, guild.iconURL);
+    const embed = new MessageEmbed();
+    const guildIcon = guild.iconURL();
+    embed.setAuthor(guild.name, guildIcon || undefined);
     embed.setTitle(`${member.user.tag} Joined the server`);
     embed.addField('Welcome', `Welcome on **${guild.name}**\nUse ${roleManager} to setup your roles!`);
 
-    embed.setThumbnail(member.user.avatarURL);
+    const avatar = member.user.avatarURL();
+    if (avatar) embed.setThumbnail(avatar);
 
-    const quietRole = guild.roles.find(r => r.name.toLowerCase().includes('quiet'));
-    if (quietRole) member.addRole(quietRole).catch(err => console.error(err));
+    const quietRole = guild.roles.cache.find(r => r.name.toLowerCase().includes('quiet'));
+    if (quietRole) member.roles.add(quietRole).catch(err => console.error(err));
 
-    const memberRole = guild.roles.find(r => r.name.toLowerCase().includes('member'));
-    if (memberRole) member.addRole(memberRole).catch(err => console.error(err));
+    const memberRole = guild.roles.cache.find(r => r.name.toLowerCase().includes('member'));
+    if (memberRole) member.roles.add(memberRole).catch(err => console.error(err));
 
-    if (!general || general.type === 'voice') return;
+    if (!general) return;
 
-    // @ts-ignore
-    Jimp.default.read(member.guild.iconURL, (err: Error, image: any) => {
-        if (err) embedSend(general, embed);
-
-        try {
-            embed.setColor(parseInt(ColorThief.getColorHex(image), 16));
-            embedSend(general, embed);
-        } catch (err) {
-            embedSend(general, embed);
-        }
-    });
+    if (!guildIcon) return embedSend(general, embed);
+    try {
+        const jimp = await Jimp.default.read(guildIcon);
+        embed.setColor(parseInt(ColorThief.getColorHex(jimp), 16));
+        return embedSend(general, embed);
+    } catch (error) {
+        return embedSend(general, embed);
+    }
 }
 
-export function embedSend(channel: TextChannel | DMChannel | GroupDMChannel, embed: RichEmbed) {
+export function embedSend(channel: TextChannel | DMChannel | NewsChannel, embed: MessageEmbed) {
     if (hasPermissionInChannel(channel, 'EMBED_LINKS')) channel.send(embed);
     else channel.send(stringifyEmbed(embed, channel.client));
 }
+

@@ -18,6 +18,12 @@ const GuildSchema = new Schema({
     swearPrevention: Boolean,
     ptUpdateChannels: [String],
     imageDeliveryChannels: [String],
+}, {
+    writeConcern: {
+        w: 'majority',
+        j: true,
+        wtimeout: 1000,
+    },
 });
 
 export const MongoGuild = model<MongooseGuildSchema>('Guild', GuildSchema);

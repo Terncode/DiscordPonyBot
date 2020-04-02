@@ -2,67 +2,34 @@ import { ResultRandom, ResultID, ResultTags, ResultTagName } from './ponyApiInte
 import { format, UrlObject } from 'url';
 import axios from 'axios';
 
-export function ponyApiRandom(tags?: string[]): Promise<ResultRandom> {
-    return new Promise((resolve, rejects) => {
-        const query = tags ? tags.join(',') : '';
-        axios.get(`${getUrl('pony/random', query)}`)
-            .then(res => {
-                if (res.data && res.data.pony) resolve(res.data.pony)
-                else rejects(new Error(`got wrong data from api\n\n${JSON.stringify(res)}`));
-            })
-            .catch(err => {
-                if (err.response && err.response.status) rejects(err.response.status);
-                else rejects(err);
-
-            });
-    });
+export async function ponyApiRandom(tags?: string[]): Promise<ResultRandom> {
+    const query = tags ? tags.join(',') : '';
+    const response = await axios.get(`${getUrl('pony/random', query)}`);
+    if (response.data && response.data.pony) return response.data.pony;
+    else throw new Error(`Got wrong data from api\n\n${JSON.stringify(response)}`);
 }
 
-export function ponyApiID(id: string | number): Promise<ResultID> {
-    return new Promise((resolve, rejects) => {
-        if (id === undefined) return rejects(new Error('missing id'));
-        axios.get(`${getUrl(`pony/id/${id}`, '')}`)
-            .then(res => {
-                if (res.data && res.data.pony) resolve(res.data.pony)
-                else rejects(new Error(`got wrong data from api\n\n${JSON.stringify(res)}`));
-            })
-            .catch(err => {
-                if (err.response && err.response.status) rejects(err.response.status);
-                else rejects(err);
+export async function ponyApiID(id: string | number): Promise<ResultID> {
 
-            });
-    });
+    if (id === undefined) throw new Error('Missing id');
+    const response = await axios.get(`${getUrl(`pony/id/${id}`, '')}`);
+
+    if (response.data && response.data.pony) return response.data.pony;
+    else throw new Error(`Got wrong data from api\n\n${JSON.stringify(response)}`);
 }
 
-export function ponyApiTag(tag: string): Promise<ResultTagName> {
-    return new Promise((resolve, rejects) => {
-        tag = tag.replace(/ /g, '%20');
-        axios.get(`${getUrl(`tag/${tag}`, '')}`)
-            .then(res => {
-                if (res.data) resolve(res.data)
-                else rejects(new Error(`got wrong data from api\n\n${JSON.stringify(res)}`));
-            })
-            .catch(err => {
-                if (err.response && err.response.status) rejects(err.response.status);
-                else rejects(err);
+export async function ponyApiTag(tag: string): Promise<ResultTagName> {
+    tag = tag.replace(/ /g, '%20');
+    const response = await axios.get(`${getUrl(`tag/${tag}`, '')}`);
 
-            });
-    });
+    if (response.data) return response.data;
+    else throw new Error(`got wrong data from api\n\n${JSON.stringify(response)}`);
 }
 
-export function ponyApiTags(): Promise<ResultTags> {
-    return new Promise((resolve, rejects) => {
-        axios.get('https://theponyapi.com/api/v1/tags')
-            .then(res => {
-                if (res.data && res.data.tags) resolve(res.data.tags)
-                else rejects(new Error(`got wrong data from api\n\n${JSON.stringify(res)}`));
-            })
-            .catch(err => {
-                if (err.response && err.response.status) rejects(err.response.status);
-                else rejects(err);
-
-            });
-    });
+export async function ponyApiTags(): Promise<ResultTags> {
+    const response = await axios.get('https://theponyapi.com/api/v1/tags');
+    if (response.data && response.data.tags) return response.data.tags;
+    else throw new Error(`got wrong data from api\n\n${JSON.stringify(response)}`);
 }
 
 function getUrl(endpoint = '', query?: string, ) {

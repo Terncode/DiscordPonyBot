@@ -5,7 +5,7 @@ import { checkCommand, getCommandArgs, removePrefixAndCommand } from '../../unti
 import { reportErrorToOwner } from '../../until/errors';
 import { hasPermissionInChannel, extractMessage } from '../../until/util';
 import { onGuildMemberKick } from '../joinLeaves';
-import { SECOND } from '../../until/constants';
+import { SECOND, WEEK } from '../../until/constants';
 
 export const GUILD_ADMIN_COMMANDS: GuildAdminCommands = {
     changeLanguage: ['a.lang', 'a.language'],
@@ -17,10 +17,11 @@ export const GUILD_ADMIN_COMMANDS: GuildAdminCommands = {
     kick: ['a.kick', 'a.throw'],
     ban: ['a.ban'],
     purge: ['a.purge'],
+    purgeAll: ['a.purge.all'],
 };
 
 export function guildAdmin(message: Message): boolean {
-    if (!message.guild) return false;
+    if (!message.guild || !message.member) return false;
     const language = getLanguage(message.guild);
 
     if (checkCommand(message, [...language.guildAdmin.commands.changeLanguage, ...GUILD_ADMIN_COMMANDS.changeLanguage])) {
@@ -59,11 +60,16 @@ export function guildAdmin(message: Message): boolean {
         if (message.member.permissionsIn(message.channel).has('MANAGE_MESSAGES')) purge(message, language);
         else message.channel.send(language.guildAdmin.noPermissionManageChannels);
         return true;
+    } else if (checkCommand(message, [...language.guildAdmin.commands.purgeAll, ...GUILD_ADMIN_COMMANDS.purgeAll])) {
+        if (message.member.permissionsIn(message.channel).has('MANAGE_MESSAGES')) purgeAll(message, language);
+        else message.channel.send(language.guildAdmin.noPermissionManageChannels);
+        return true;
     }
     return false;
 }
 
 async function enableDisableAutoConversion(message: Message, language: Language) {
+    if (!message.guild) return;
     const args = getCommandArgs(message);
     const feature = language.guildAdmin.autoConversion;
     try {
@@ -84,6 +90,7 @@ async function enableDisableAutoConversion(message: Message, language: Language)
 }
 
 async function enableDisableSwearPrevention(message: Message, language: Language) {
+    if (!message.member || !message.guild) return;
     const args = getCommandArgs(message);
     const feature = language.guildAdmin.swearProtection;
     try {
@@ -109,6 +116,7 @@ async function enableDisableSwearPrevention(message: Message, language: Language
 }
 
 async function changePrefix(message: Message, language: Language) {
+    if (!message.guild) return;
     const args = getCommandArgs(message);
     if (!args[0]) {
         message.channel.send(language.guildAdmin.specifyPrefix);
@@ -129,6 +137,7 @@ async function changePrefix(message: Message, language: Language) {
 }
 
 async function changeLanguage(message: Message, language: Language) {
+    if (!message.guild) return;
     const content = removePrefixAndCommand(message).replace(/ /g, '-').toLowerCase();
     const availableLanguages = getAvailableLanguages(true);
     if (availableLanguages.includes(content)) {
@@ -151,6 +160,7 @@ async function changeLanguage(message: Message, language: Language) {
 }
 
 async function imageDelivery(message: Message, language: Language) {
+    if (!message.guild) return;
     const channel = message.channel;
     const args = getCommandArgs(message);
     const channelName = channel.toString();
@@ -173,6 +183,7 @@ async function imageDelivery(message: Message, language: Language) {
 }
 
 async function updatesPT(message: Message, language: Language) {
+    if (!message.guild) return;
     const channel = message.channel;
     const args = getCommandArgs(message);
     const channelName = channel.toString();
@@ -200,12 +211,15 @@ function replaceString(text: string, channel: string, service: string) {
 }
 
 async function kickMember(message: Message, language: Language) {
+
+    if (!message.guild || !message.guild.me) return
     if (!message.guild.me.permissions.has('KICK_MEMBERS')) {
         message.channel.send(language.guildAdmin.noPermissionKickMembers);
         return;
     }
 
-    const mentions = message.mentions.members.map(m => m);
+    const mentionsCollections = message.mentions.members
+    const mentions = mentionsCollections ? mentionsCollections.map(m => m) : [];
     const content = removePrefixAndCommand(message).replace(/<@!?[0-9]*>/g, '');
 
     if (!mentions.length) {
@@ -233,12 +247,13 @@ async function kickMember(message: Message, language: Language) {
 }
 
 async function banMember(message: Message, language: Language) {
+    if (!message.guild || !message.guild.me) return;
     if (!message.guild.me.permissions.has('BAN_MEMBERS')) {
         message.channel.send(language.guildAdmin.botDoesNotHavePermissionBanMembers);
         return;
     }
-
-    const mentions = message.mentions.members.map(m => m);
+    const mentionsCollections = message.mentions.members
+    const mentions = mentionsCollections ? mentionsCollections.map(m => m) : [];
     const content = removePrefixAndCommand(message).replace(/<@!?[0-9]*>/g, '');
 
     if (!mentions.length) {
@@ -252,12 +267,12 @@ async function banMember(message: Message, language: Language) {
             const dm = await member.user.createDM();
             await dm.send(language.guildAdmin.youHaveBeenBanned.replace(/&GUILD_NAME/g, message.guild.name).replace(/&REASON/g, r));
         } catch (_) {/* ignored */ }
-        member.ban(content)
-            .then(member => {
-                message.channel.send(language.guildAdmin.memberHasBeenBaned.replace(/&USER/g, member.user.tag));
-            }).catch(() => {
-                message.channel.send(language.guildAdmin.cannotPerformActionOnUser);
-            });
+        try {
+            const m = await member.ban({ reason: content })
+            message.channel.send(language.guildAdmin.memberHasBeenBaned.replace(/&USER/g, m.user.tag));
+        } catch (error) {
+            message.channel.send(language.guildAdmin.cannotPerformActionOnUser);
+        }
     } else {
         message.channel.send(language.guildAdmin.cannotPerformActionOnUser);
     }
@@ -269,7 +284,9 @@ async function purge(message: Message, language: Language) {
         return;
     }
 
-    const member: GuildMember | null = message.mentions.members.map(m => m)[0];
+    let member: GuildMember | null = null;
+    if (message.mentions.members) member = message.mentions.members.map(m => m)[0];
+
     const args = getCommandArgs(message);
     const numberArg = args[0];
     const numberOfMessages = parseInt(numberArg);
@@ -295,34 +312,71 @@ async function purge(message: Message, language: Language) {
                 }, SECOND * 10);
             });
         return;
+    } else if (numberOfMessages <= 0) {
+        message.channel.send(`Limit to low. Number must be grater than 0`)
+            .then(msg => {
+                setTimeout(() => {
+                    extractMessage(msg, m => {
+                        message.delete().catch(console.error);
+                        m.delete().catch(console.error);
+                    });
+                }, SECOND * 10);
+            });
+        return;
     }
     let messages: Message[];
-    if (member) messages = message.channel.messages.map(m => m).filter(m => m.author === member!.user).sort((a, b) => b.createdTimestamp - a.createdTimestamp);
-    else messages = message.channel.messages.map(m => m).sort((a, b) => b.createdTimestamp - a.createdTimestamp);
+    if (member) messages = message.channel.messages.cache.map(m => m).filter(m => m.author === member!.user).sort((a, b) => b.createdTimestamp - a.createdTimestamp);
+    else messages = message.channel.messages.cache.map(m => m).sort((a, b) => b.createdTimestamp - a.createdTimestamp);
+    const twoWeeksAgo = Date.now() - (WEEK * 2);
 
     if (messages.length >= numberOfMessages + 1) {
-        const purgeMessages = messages.splice(0, numberOfMessages + 1);
-        for (const purgeMessage of purgeMessages) {
-            await purgeMessage.delete().catch(console.error);
+        const shouldBulk = !!messages.find(e => e.createdTimestamp > twoWeeksAgo);
+        if (shouldBulk) {
+            await message.channel.bulkDelete(messages)
+        } else {
+            const purgeMessages = messages.splice(0, numberOfMessages + 1);
+            for (const purgeMessage of purgeMessages) {
+                await purgeMessage.delete().catch(console.error);
+            }
+            await message.delete().catch(console.error);
         }
-        await message.delete().catch(console.error);
+
     } else {
         try {
             await message.delete().catch(console.error);
-            const messagesCollection = await message.channel.fetchMessages({ limit: numberOfMessages + 1 > 100 ? 100 : numberOfMessages + 1 });
+            const messagesCollection = await message.channel.messages.fetch({ limit: numberOfMessages + 1 > 100 ? 100 : numberOfMessages + 1 });
             messages = messagesCollection.map(m => m).sort((a, b) => b.createdTimestamp - a.createdTimestamp);
-            if (member) messages = message.channel.messages.map(m => m).filter(m => m.author === member!.user).sort((a, b) => b.createdTimestamp - a.createdTimestamp);
-            else messages = message.channel.messages.map(m => m).sort((a, b) => b.createdTimestamp - a.createdTimestamp);
+            if (member) messages = message.channel.messages.cache.map(m => m).filter(m => m.author === member!.user).sort((a, b) => b.createdTimestamp - a.createdTimestamp);
+            else messages = message.channel.messages.cache.map(m => m).sort((a, b) => b.createdTimestamp - a.createdTimestamp);
 
             const purgeMessages = messages.splice(0, messages.length < numberOfMessages ? messages.length : numberOfMessages);
 
-            for (const purgeMessage of purgeMessages) {
+            const deletedCollection = await message.channel.bulkDelete(purgeMessages);
+            const deleted = deletedCollection.map(m => m);
+            for (const delMsg of deleted) {
+                const indexOf = purgeMessages.indexOf(delMsg);
+                if (indexOf !== -1) purgeMessages.splice(indexOf, 1);
+            }
+            for (const message of purgeMessages) {
+                await message.delete().catch(console.error);
 
-                await purgeMessage.delete().catch(console.error);
             }
 
         } catch (error) {
             message.channel.send(language.guildAdmin.unknownError);
         }
+    }
+}
+
+async function purgeAll(message: Message, language: Language) {
+    if (!message.guild) return;
+    const channel = message.channel as TextChannel;
+    if (hasPermissionInChannel(message.channel, 'MANAGE_CHANNELS')) {
+        const pos = channel.position;
+        const newChannel = await channel.clone();
+        await channel.delete();
+        await newChannel.setPosition(pos);
+    } else {
+        message.channel.send(language.guildAdmin.noPermissionManageChannels);
     }
 }

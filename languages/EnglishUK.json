@@ -249,6 +249,7 @@
             "swearPrevention": [],
             "autoConversion": [],
             "purge": [],
+            "purgeAll": [],
             "ban": [],
             "kick": []
         }

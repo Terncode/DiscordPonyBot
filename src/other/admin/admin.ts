@@ -1,11 +1,11 @@
 import { isBotOwner, removeFirstWord } from '../../until/util';
-import { Message, PresenceStatus } from 'discord.js';
+import { Message, PresenceStatusData } from 'discord.js';
 import { checkCommand, removePrefixAndCommand, getCommandArgs } from '../../until/commandsHandler';
 import { destroy, updateActivity } from '../..';
+import { garbageCollectGuildsFromDataBase, removeDeletedChannelsFromSubscriptions } from '../../until/guild';
 
 export function ownerCommands(message: Message): boolean {
     if (!isBotOwner(message.author)) return false;
-
     // const dev = process.env.NODE_ENV !== 'production';
     if (/*dev && */ checkCommand(message, ['throw.error'])) {
         message.channel.send(`Throwing error...`);
@@ -29,15 +29,21 @@ export function ownerCommands(message: Message): boolean {
     } else if (checkCommand(message, ['eval'])) {
         onEval(message);
         return true;
-    } else return false;
+    } else if (checkCommand(message, ['clean.database'])) {
+        cleanDatabase(message);
+        return true;
+    } else if (checkCommand(message, ['clean.database.subscriptions'])) {
+        cleanSubscriptionChannelsDataBase(message);
+        return true;
+    }
+    else return false;
 }
 
 function setStatus(message: Message) {
     const status = removePrefixAndCommand(message).toLowerCase();
-
     if (['online', 'idle', 'invisible', 'dnd'].includes(status)) {
-        const s = status as PresenceStatus;
-        message.client.user.setStatus(s)
+        const s = status as PresenceStatusData;
+        message.client.user!.setStatus(s)
             .then(() => {
                 message.channel.send(`My status has been altered`);
             }).catch(err => message.channel.send(err));
@@ -75,16 +81,14 @@ function setPresence(message: Message) {
 }
 
 function onEval(message: Message) {
-    console.warn(`executing eval ${message.author.tag}`);
+    console.warn(`Executing eval ${message.author.tag}`);
     const { client } = message;
     const code = removePrefixAndCommand(message);
     const isCode = code.match(/```javascript[ \n\t\S\s\w\W\r]*```/g);
     let result: any;
     try {
         if (client) console.debug();
-        // tslint:disable-next-line: no-eval
         if (isCode) result = eval(isCode[0].slice(13, -3));
-        // tslint:disable-next-line: no-eval
         else result = eval(code);
     } catch (error) {
         const err = error.toString();
@@ -102,4 +106,22 @@ function onEval(message: Message) {
 async function onShutDown(message: Message) {
     await message.channel.send(`shutingDown...`);
     destroy();
+}
+
+async function cleanDatabase(message: Message) {
+    try {
+        const removed = await garbageCollectGuildsFromDataBase(message.client);
+        message.channel.send(`Total removed Inactive guilds: ${removed.length}`);
+    } catch (error) {
+        message.channel.send(error.stack);
+    }
+}
+
+async function cleanSubscriptionChannelsDataBase(message: Message) {
+    try {
+        const removed = await removeDeletedChannelsFromSubscriptions(message.client);
+        message.channel.send(`Removed inactive channels: ${removed.length}`);
+    } catch (error) {
+        message.channel.send(error.stack);
+    }
 }

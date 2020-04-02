@@ -1,4 +1,4 @@
-import { Message, GuildMember, Client, Guild, User } from 'discord.js';
+import { Message, GuildMember, Client, Guild, User, PartialGuildMember, PartialUser } from 'discord.js';
 
 import { stats } from './other/misc/stats';
 import { translate } from './other/translate';
@@ -22,6 +22,7 @@ import { onGuildMemberJoin, onGuildMemberLeave, onGuildMemberBan, onGuildMemberB
 export async function onMessage(message: Message) {
     if (!hasPermissionInChannel(message.channel, 'SEND_MESSAGES')) return;
 
+    // bot addons
     if (ternsCodeLab.onMessage(message)) return;
 
     // Defaults
@@ -41,22 +42,22 @@ export async function onMessage(message: Message) {
 
     }
     chatMonitor(message);
-
+    const mentions = message.mentions.users.map(u => u);
     // if bot is mention we give user default prefix command
-    if (message.guild && message.isMentioned(message.client.user) && message.content.length <= `<@!${message.client.user.id}>`.length) {
+    if (message.guild && mentions.includes(message.client.user!) && message.content.length <= `<@!${message.client.user!.id}>`.length) {
         const guildLang = getPrefix(message.guild);
         const language = getLanguage(message.guild);
         return message.channel.send(language.help.prefix.replace(/&PREFIX/g, guildLang));
     }
 }
 
-export function guildMemberAdd(guildMember: GuildMember) {
+export function guildMemberAdd(guildMember: GuildMember | PartialGuildMember) {
     if (ternsCodeLab.onGuildMemberAdd(guildMember)) return;
 
     onGuildMemberJoin(guildMember);
 }
 
-export function guildMemberRemove(guildMember: GuildMember) {
+export function guildMemberRemove(guildMember: GuildMember | PartialGuildMember) {
 
     onGuildMemberLeave(guildMember);
 }
@@ -65,17 +66,14 @@ export async function onStartUp(client: Client) {
     await ternsCodeLab.onStartUp(client);
 }
 
-export function guildBanAdd(guild: Guild, user: User) {
+export function guildBanAdd(guild: Guild, user: User | PartialUser) {
     onGuildMemberBan(guild, user);
 }
 
-export function guildBanRemove(guild: Guild, user: User) {
+export function guildBanRemove(guild: Guild, user: User | PartialUser) {
     onGuildMemberBanRemove(guild, user);
 }
 
-export async function onShutDown(client: Client): Promise<void> {
-    return new Promise(async resolve => {
-        await ternsCodeLab.onShutDown(client);
-        resolve();
-    });
+export async function onShutDown(client: Client) {
+    await ternsCodeLab.onShutDown(client);
 }

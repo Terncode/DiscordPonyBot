@@ -7,46 +7,42 @@
     "build": "tsc",
     "build:watch": "tsc -w",
     "start": "node ./dist/index.js",
-    "nodemon": "nodemon --inspect ./dist/index.js"
+    "nodemon": "nodemon --inspect ./dist/index.js",
+    "dev": "concurrently --prefix \"[{name}]\" --names \"TYPESCRIPT,NODEMON\" -c \"bgBlue.bold,bgGreen.bold\" \"npm run build:watch\" \"npm run nodemon\""
   },
   "engines": {
-    "node": "10.15.3"
+    "node": ">=12.0.0"
   },
   "author": "Terncode",
   "license": "ISC",
   "dependencies": {
     "@k3rn31p4nic/google-translate-api": "^1.0.5",
-    "@types/mongoose": "^5.5.41",
     "axios": "^0.19.2",
     "canvas": "^2.5.0",
     "color-thief-jimp": "^2.0.2",
     "convert-units": "^2.3.4",
-    "discord.js": "^11.5.1",
-    "ffmpeg-binaries": "^4.0.0",
-    "ffmpeg-static": "^2.5.0",
+    "discord.js": "^12.1.1",
     "image-data-uri": "^2.0.1",
-    "jimp": "^0.6.4",
+    "jimp": "^0.10.0",
     "jsdom": "^16.0.0",
     "lodash": "^4.17.15",
     "moment": "^2.24.0",
     "mongoose": "^5.8.9",
-    "node-derpi": "^0.3.7",
-    "node-opus": "^0.3.2",
-    "node-pre-gyp": "^0.14.0",
+    "node-derpi": "^1.0.4",
     "ontime": "0.0.6",
-    "random-hex-color": "^1.0.1",
     "safe-eval": "^0.4.1",
-    "simple-soundcloud": "^1.4.0",
-    "simple-youtube-api": "^5.2.1",
     "urban-dictionary": "^2.2.1",
-    "word-definition": "^2.1.6",
-    "youtube-api": "^2.0.10",
-    "ytdl-core": "^0.29.3",
-    "ytdl-core-discord": "^1.0.3"
+    "word-definition": "^2.1.6"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.149",
-    "@types/node": "^12.6.8",
+    "@types/mongoose": "^5.5.41",
+    "@types/node": "^13.9.8",
+    "@types/ws": "^7.2.3",
+    "@typescript-eslint/eslint-plugin": "^2.26.0",
+    "@typescript-eslint/parser": "^2.26.0",
+    "concurrently": "^5.1.0",
+    "eslint": "^6.8.0",
     "typescript": "^3.5.2"
   },
   "nodemonConfig": {

@@ -22,14 +22,14 @@ module.exports = {
     ],
     "rules": {
         "semi": [2, "always"],
+        "@typescript-eslint/explicit-function-return-type": 0,
         "@typescript-eslint/no-unused-vars": 0,
         "@typescript-eslint/no-explicit-any": 0,
-        "@typescript-eslint/explicit-function-return-type": 0,
-        "@typescript-eslint/no-empty-function": 0,
+        "@typescript-eslint/no-var-requires": 0,
         "@typescript-eslint/no-use-before-define": 0,
+        "@typescript-eslint/no-empty-function": 0,
         "@typescript-eslint/no-inferrable-types": 0,
         "@typescript-eslint/ban-ts-ignore": 0,
-        "@typescript-eslint/no-non-null-assertion": 0,
-        "eslint no-undefined": "error"
+        "@typescript-eslint/no-non-null-assertion": 0
     }
 };

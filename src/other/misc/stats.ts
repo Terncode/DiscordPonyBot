@@ -1,4 +1,4 @@
-import { Message, RichEmbed, User, Guild, Client, GuildMember, Collection, PresenceStatusData } from 'discord.js';
+import { Message, MessageEmbed, User, Guild, Client, GuildMember, Collection, PresenceStatusData, ActivityType, PresenceStatus } from 'discord.js';
 import { client, inviteLink, version } from '../../index';
 import { StatsCommands, Language } from '../../language/langTypes';
 import { getLanguage, findGuildMembers } from '../../until/guild';
@@ -18,13 +18,6 @@ enum Status {
     IDLE = '#faa61a',
     DND = '#f04747',
     OFFLINE = '#727d8a',
-}
-
-enum GameType {
-    PLAYING = 0,
-    STEAMING = 1,
-    LISTENING = 2,
-    WATCHING = 3,
 }
 
 export function stats(message: Message): boolean {
@@ -50,8 +43,8 @@ async function getInfo(message: Message) {
         else message.channel.send(stringifyEmbed(embed, message.client, message.guild));
 
     } else if (message.guild) {
-        let guildMember = message.member;
-        if (msgContent) {
+        let guildMember = message.member!;
+        if (msgContent && message.mentions.members) {
             let guildMembers: GuildMember[] | null = message.mentions.members.map(m => m);
             if (!guildMembers || !guildMembers.length)
                 guildMembers = findGuildMembers(msgContent, message.guild);
@@ -60,38 +53,38 @@ async function getInfo(message: Message) {
             else guildMember = guildMembers[0];
         }
 
-        embed = infoAboutGuildMember(embed, guildMember, language);
+        embed = await infoAboutGuildMember(embed, guildMember, language);
         if (hasPermissionInChannel(message.channel, 'EMBED_LINKS')) message.channel.send(embed);
         else message.channel.send(stringifyEmbed(embed, message.client, message.guild));
         return;
     } else {
         let user = message.author;
         if (msgContent && isBotOwner(message.author)) {
-            const users = findUsers(msgContent, message.client);
+            const users = await findUsers(msgContent, message.client);
             if (!users || !users.length) return message.channel.send(language.miscellaneous.userNotFound.replace(/&QUERY/g, msgContent));
             else if (users.length > 1) return message.channel.send(language.miscellaneous.ambiguous.replace(/&QUERY/g, msgContent));
             else user = users[0];
         }
-        const embed = infoAboutUser(signEmbed(message.client), user, language, false, isBotOwner(message.author));
+        const embed = await infoAboutUser(signEmbed(message.client), user, language, false, isBotOwner(message.author));
         if (hasPermissionInChannel(message.channel, 'EMBED_LINKS')) message.channel.send(embed);
         else message.channel.send(stringifyEmbed(embed, message.client, message.guild));
     }
 }
 
-function infoAboutUser(embed: RichEmbed, user: User, language: Language, fullImage = false, showGuilds = false) {
+async function infoAboutUser(embed: MessageEmbed, user: User, language: Language, fullImage = false, showGuilds = false) {
     embed = colorEmbed(embed, user.presence.status);
-    if (fullImage) embed.setImage(user.displayAvatarURL);
-    embed.setThumbnail(user.displayAvatarURL);
+    if (fullImage) embed.setImage(user.displayAvatarURL());
+    embed.setThumbnail(user.displayAvatarURL());
     embed.setAuthor(`${removeMarkup(user.tag, user.client)} <${user.id}>`);
     if (showGuilds) {
-        const guilds = user.client.guilds.map(g => g).filter(g => g.members.find(m => m.user === user));
+        const guilds = user.client.guilds.cache.map(g => g).filter(g => g.members.cache.find(m => m.user === user));
         const guildString = guilds.join('\n');
         embed.setDescription(guildString.length > 2000 ? `${guildString.slice(0, 1800)}...` : guildString);
     }
 
     const status: string[] = [`${language.stats.presence.status.status}: ${getStatusFromLanguage(language, user.presence.status)}`];
-    if (user.presence && user.presence.game) {
-        const { game } = user.presence;
+    if (user.presence && user.presence.activities[0]) {
+        const game = user.presence.activities[0];
         status.push('');
         status.push(getTypeFromLanguage(language, game.type));
         if (game.name) status.push(`${language.stats.presence.game.name}: ${game.name}`);
@@ -108,10 +101,10 @@ function infoAboutUser(embed: RichEmbed, user: User, language: Language, fullIma
     embed.addField(language.stats.presence.presence, status.join('\n'), true);
     embed.addField(language.stats.createdUserAccount, momentFormat(user.createdAt, language, true), true);
 
-    if (user.equals(user.client.user)) {
-        const channels = `${language.stats.bot.channels}: ${client.channels.filter(c => c.type === 'text').size}`;
-        const guilds = `${language.stats.bot.guild}: ${client.guilds.size}`;
-        const users = `${language.stats.bot.users}: ${client.users.filter(c => c.bot === false).size}`;
+    if (user === user.client.user) {
+        const channels = `${language.stats.bot.channels}: ${client.channels.cache.filter(c => c.type === 'text').size}`;
+        const guilds = `${language.stats.bot.guild}: ${client.guilds.cache.size}`;
+        const users = `${language.stats.bot.users}: ${client.users.cache.filter(c => c.bot === false).size}`;
         embed.addField(language.stats.bot.inviteLink, ` [${language.stats.bot.inviteLinkClick}](${inviteLink})`);
         embed.addField(language.stats.bot.status, `${guilds}\n${channels}\n${users}`, true);
 
@@ -122,68 +115,60 @@ function infoAboutUser(embed: RichEmbed, user: User, language: Language, fullIma
     return embed;
 }
 
-function infoAboutGuild(embed: RichEmbed, guild: Guild, language: Language): Promise<RichEmbed> {
-    return new Promise((resolve) => {
-        if (guild.members.size) {
-            const valueName = language.stats.guild.members.replace(/&COUNT/g, guild.members.size.toString());
-            const members: string[] = [];
-            members.push(`${language.stats.guild.bots}: ${guild.members.filter(m => m.user.bot).size}`);
-            members.push(`${language.stats.guild.humans}: ${guild.members.filter(m => m.user.bot).size}`);
-            embed.addField(valueName, members.join('\n'), true);
-        }
-        if (guild.channels.size) {
-            const valueName = language.stats.guild.channels.replace(/&COUNT/g, guild.channels.size.toString());
-            const channels: string[] = [];
-            channels.push(`${language.stats.guild.textChannel}: ${guild.channels.filter(c => c.type !== 'voice').size}`);
-            channels.push(`${language.stats.guild.voiceChannel}: ${guild.channels.filter(c => c.type === 'voice').size}`);
-            embed.addField(valueName, channels.join('\n'), true);
-        }
-        embed.addField(language.stats.guild.region, ` ${guild.region} ${getRegionFlag(guild.region)}`);
+async function infoAboutGuild(embed: MessageEmbed, guild: Guild, language: Language) {
+    if (guild.members.cache.size) {
+        const valueName = language.stats.guild.members.replace(/&COUNT/g, guild.members.cache.size.toString());
+        const members: string[] = [];
+        members.push(`${language.stats.guild.bots}: ${guild.members.cache.filter(m => m.user.bot).size}`);
+        members.push(`${language.stats.guild.humans}: ${guild.members.cache.filter(m => m.user.bot).size}`);
+        embed.addField(valueName, members.join('\n'), true);
+    }
+    if (guild.channels.cache.size) {
+        const valueName = language.stats.guild.channels.replace(/&COUNT/g, guild.channels.cache.size.toString());
+        const channels: string[] = [];
+        channels.push(`${language.stats.guild.textChannel}: ${guild.channels.cache.filter(c => c.type !== 'voice').size}`);
+        channels.push(`${language.stats.guild.voiceChannel}: ${guild.channels.cache.filter(c => c.type === 'voice').size}`);
+        embed.addField(valueName, channels.join('\n'), true);
+    }
+    embed.addField(language.stats.guild.region, ` ${guild.region} ${getRegionFlag(guild.region)}`);
 
-        embed.addField(language.stats.guild.guildCreated, momentFormat(guild.createdAt, language));
+    embed.addField(language.stats.guild.guildCreated, momentFormat(guild.createdAt, language));
 
-        if (guild.emojis.size) {
-            const valueName = language.stats.guild.emojis.replace(/&COUNT/g, guild.emojis.size.toString());
-            const emojis: string[] = [];
-            emojis.push(`${language.stats.guild.emojisNotAnimated}: ${guild.emojis.filter(c => !c.animated).size}`);
-            emojis.push(`${language.stats.guild.emojisAnimated}: ${guild.emojis.filter(c => c.animated).size}`);
-            embed.addField(valueName, emojis.join('\n'), true);
-        }
+    if (guild.emojis.cache.size) {
+        const valueName = language.stats.guild.emojis.replace(/&COUNT/g, guild.emojis.cache.size.toString());
+        const emojis: string[] = [];
+        emojis.push(`${language.stats.guild.emojisNotAnimated}: ${guild.emojis.cache.filter(c => !c.animated).size}`);
+        emojis.push(`${language.stats.guild.emojisAnimated}: ${guild.emojis.cache.filter(c => c.animated).size}`);
+        embed.addField(valueName, emojis.join('\n'), true);
+    }
 
-        if (guild.roles.size) {
-            const valueName = language.stats.guild.roles.replace(/&COUNT/g, guild.roles.size.toString());
-            const roles: string[] = [];
-            roles.push(`${language.stats.guild.rolesHoisted}: ${guild.roles.filter(c => c.hoist).size}`);
-            roles.push(`${language.stats.guild.rolesNotHoisted}: ${guild.roles.filter(c => !c.hoist).size}`);
-            embed.addField(valueName, roles.join('\n'), true);
-        }
+    if (guild.roles.cache.size) {
+        const valueName = language.stats.guild.roles.replace(/&COUNT/g, guild.roles.cache.size.toString());
+        const roles: string[] = [];
+        roles.push(`${language.stats.guild.rolesHoisted}: ${guild.roles.cache.filter(c => c.hoist).size}`);
+        roles.push(`${language.stats.guild.rolesNotHoisted}: ${guild.roles.cache.filter(c => !c.hoist).size}`);
+        embed.addField(valueName, roles.join('\n'), true);
+    }
 
-        if (!guild.iconURL) {
-            resolve(embed);
-        } else {
-            embed.setThumbnail(guild.iconURL);
-            Jimp.read(guild.iconURL, (err: Error, image: any) => {
-                if (err) return resolve(embed);
-
-                try {
-                    embed.setColor(parseInt(ColorThief.getColorHex(image), 16));
-                    return resolve(embed);
-                } catch (err) {
-                    return resolve(embed);
-                }
-            });
-        }
-    });
+    const image = guild.iconURL();
+    if (!image) return embed;
+    try {
+        const jimp = await Jimp.read(image);
+        embed.setColor(parseInt(ColorThief.getColorHex(jimp), 16));
+        return embed;
+    } catch (error) {
+        return embed;
+    }
 }
 
-function infoAboutGuildMember(embed: RichEmbed, guildMember: GuildMember, language: Language) {
-    embed = infoAboutUser(embed, guildMember.user, language);
+async function infoAboutGuildMember(embed: MessageEmbed, guildMember: GuildMember, language: Language) {
+    embed = await infoAboutUser(embed, guildMember.user, language);
     embed.addField(language.stats.memberJoinedGuild, momentFormat(guildMember.joinedAt, language, true));
     if (guildMember.nickname)
         embed.setAuthor(`${removeMarkup(guildMember.displayName, guildMember.client)} (${removeMarkup(guildMember.user.tag, guildMember.client)}) <${guildMember.user.id}>`);
 
-    const roles = guildMember.roles
-        .filter(r => r !== guildMember.guild.defaultRole)
+    const roles = guildMember.roles.cache
+        .filter(r => r !== guildMember.guild.roles.everyone)
         .sort((a, b) => a.position + b.position)
         .map(r => removeMarkup(r.name, guildMember.client));
     if (roles.length) {
@@ -208,8 +193,6 @@ function getRegionFlag(region: string) {
         case 'us-south':
         case 'us-west':
             return '🇺🇸';
-        case 'brazil':
-            return '🇧🇷';
         case 'frankfurt':
             return '🇩🇪';
         case 'dubai':
@@ -239,22 +222,22 @@ function getRegionFlag(region: string) {
     }
 }
 
-function getTypeFromLanguage(language: Language, type: number) {
+function getTypeFromLanguage(language: Language, type: ActivityType) {
     switch (type) {
-        case GameType.LISTENING:
+        case 'LISTENING':
             return language.stats.presence.game.type.listenings;
-        case GameType.STEAMING:
+        case 'STREAMING':
             return language.stats.presence.game.type.steaming;
-        case GameType.WATCHING:
+        case 'WATCHING':
             return language.stats.presence.game.type.watching;
-        case GameType.STEAMING:
-            return language.stats.presence.game.type.steaming;
-        default:
+        case 'CUSTOM_STATUS':
             return language.stats.presence.game.type.customStatus;
+        default:
+            return '?';
     }
 }
 
-function getStatusFromLanguage(language: Language, status: PresenceStatusData) {
+function getStatusFromLanguage(language: Language, status: PresenceStatusData | PresenceStatus) {
     switch (status) {
         case 'online':
             return language.stats.presence.status.online;
@@ -267,7 +250,7 @@ function getStatusFromLanguage(language: Language, status: PresenceStatusData) {
     }
 }
 
-function colorEmbed(embed: RichEmbed, status: PresenceStatusData) {
+function colorEmbed(embed: MessageEmbed, status: PresenceStatus) {
     switch (status) {
         case 'online':
             embed.setColor(Status.ONLINE);
@@ -285,7 +268,7 @@ function colorEmbed(embed: RichEmbed, status: PresenceStatusData) {
     return embed;
 }
 
-function findUsers(query: string, client: Client) {
+async function findUsers(query: string, client: Client) {
     const finders = [
         (u: User) => u.username === query,
         (u: User) => u.username.toLowerCase() === query.toLowerCase(),
@@ -298,8 +281,23 @@ function findUsers(query: string, client: Client) {
     ];
     let users: Collection<string, User> | null = null;
     for (const finder of finders) {
-        users = client.users.filter(finder);
+        users = client.users.cache.filter(finder);
+        await lagKiller();
         if (users.size) break;
     }
+    if (!users && !isNaN(parseInt(query))) {
+        try {
+            const user = await client.users.fetch(query);
+            return [user];
+        } catch (error) { /* ignored */ }
+    }
     return users ? users.map(g => g) : null;
+}
+
+function lagKiller(): Promise<void> {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve();
+        });
+    });
 }

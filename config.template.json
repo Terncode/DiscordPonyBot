@@ -2,6 +2,7 @@
     "TOKEN": "TOKEN",
     "DEBUG": false,
     "OWNER_ID": "OWNER_ID",
+    "PREFIX": "-",
     "DB_CONNECTION_STRING": "mongodb://localhost:27017/PonyBot",
     "PT_UPDATER_DOMAIN": "",
     "PT_UPDATER_LOGO": "",

@@ -22,7 +22,7 @@ export function help(message: Message): boolean {
     const sfw = guildChannel ? !guildChannel.nsfw : true;
     const prefix = getPrefix(message.guild);
     if (checkCommand(message, [...language.help.commands.helpCommands, ...HELP_COMMANDS])) {
-        const permissions = message.guild ? message.member.permissionsIn(message.channel) : null;
+        const permissions = message.member ? message.member.permissionsIn(message.channel) : null;
         const content: string[] = [];
         if (message.guild && (permissions && permissions.has('MANAGE_GUILD')) || (permissions && permissions.has('MANAGE_MESSAGES'))) {
             content.push(repPre(language.help.adminHelp, prefix).replace(/&COMMAND/g, [...language.help.commands.adminHelp, ...ADMIN_HELP_COMMANDS][0]));
@@ -36,7 +36,7 @@ export function help(message: Message): boolean {
             return true;
         }
         const content: string[] = [];
-        const permissions = message.guild ? message.member.permissionsIn(message.channel) : null;
+        const permissions = message.member ? message.member.permissionsIn(message.channel) : null;
         if (!(message.guild && (permissions && permissions.has('MANAGE_GUILD')) || (permissions && permissions.has('MANAGE_MESSAGES')))) {
             content.push(`**${language.help.notAdminHelp}**\n\n`);
         }
@@ -50,7 +50,7 @@ export function help(message: Message): boolean {
 
 export function aliases(message: Message, language: Language) {
     const guildChannel = message.guild ? message.channel as TextChannel : null;
-    const permissions = message.guild ? message.member.permissionsIn(message.channel) : null;
+    const permissions = message.member ? message.member.permissionsIn(message.channel) : null;
     const sfw = guildChannel ? !guildChannel.nsfw : true;
 
     const lang: string[] = [
@@ -77,19 +77,17 @@ export function aliases(message: Message, language: Language) {
 }
 
 export function sendHelpEmbed(message: Message, content: string[]) {
-
     if (hasPermissionInChannel(message.channel, 'EMBED_LINKS')) {
         const embed = signEmbed(message.client);
         const name = message.guild ? message.guild.name : message.author.tag;
-        const icon = message.guild ? message.guild.iconURL : message.author.avatarURL;
-        embed.setAuthor(name, icon);
+        const icon = message.guild ? message.guild.iconURL() : message.author.avatarURL();
+        embed.setAuthor(name, icon || undefined);
         embed.setDescription(content.join('\n'));
         message.channel.send(embed);
     } else {
         const code = '```';
         message.channel.send(`${code}\n${content.join('\n')}${code}`);
     }
-
 }
 
 export function helpEntries(language: Language, prefix: string, sfw = true) {
@@ -101,7 +99,7 @@ export function helpEntries(language: Language, prefix: string, sfw = true) {
         repPre(language.help.joke, prefix).replace(/&COMMAND/g, [...language.miscellaneous.commands.jokes, ...MISCELLANEOUS_COMMANDS.jokes][0]),
         repPre(language.help.boop, prefix).replace(/&COMMAND/g, [...language.miscellaneous.commands.boop, ...MISCELLANEOUS_COMMANDS.boop][0]),
         repPre(language.help.hugs, prefix).replace(/&COMMAND/g, [...language.miscellaneous.commands.hug, ...MISCELLANEOUS_COMMANDS.hug][0]),
-        repPre(language.help.dictionary, prefix).replace(/&COMMAND/g, [...language.dictionary.commands, ...MISCELLANEOUS_COMMANDS.hug][0]),
+        repPre(language.help.dictionary, prefix).replace(/&COMMAND/g, [...language.dictionary.commands, ...DICTIONARY_COMMANDS][0]),
         repPre(language.help.translate, prefix).replace(/&COMMAND/g, [...language.translate.commands, ...TRANSLATE_COMMANDS][0]),
     ];
     if (!sfw) {

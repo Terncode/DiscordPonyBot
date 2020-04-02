@@ -22,11 +22,11 @@ export interface Language {
         noJokes: string;
         jokes: {
             [key: string]: string[];
-        }
+        };
         noFact: string;
         facts: {
             [key: string]: string[];
-        },
+        };
     };
 }
 
@@ -90,7 +90,7 @@ interface Stats {
         roles: string;
         rolesNotHoisted: string;
         emojis: string;
-        emojisAnimated: string
+        emojisAnimated: string;
         emojisNotAnimated: string;
     };
     presence: {
@@ -108,7 +108,7 @@ interface Stats {
                 steaming: string;
                 watching: string;
                 playing: string;
-            }
+            };
         };
         status: {
             offline: string;
@@ -116,7 +116,7 @@ interface Stats {
             online: string;
             idle: string;
             dnd: string;
-        }
+        };
     };
 }
 
@@ -295,13 +295,14 @@ export interface GuildAdminCommands {
     kick: string[];
     ban: string[];
     purge: string[];
+    purgeAll: string[];
 }
 
-export declare type TranslateCommands = string[];
-export declare type StatsCommands = string[];
-export declare type DerpibooruCommands = string[];
-export declare type UrbanDictionaryCommands = string[];
-export declare type DictionaryCommands = string[];
-export declare type HelpCommands = string[];
-export declare type AdminHelpCommands = string[];
-export declare type AliasesCommands = string[];
+export type TranslateCommands = string[];
+export type StatsCommands = string[];
+export type DerpibooruCommands = string[];
+export type UrbanDictionaryCommands = string[];
+export type DictionaryCommands = string[];
+export type HelpCommands = string[];
+export type AdminHelpCommands = string[];
+export type AliasesCommands = string[];

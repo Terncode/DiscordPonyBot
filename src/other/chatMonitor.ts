@@ -60,6 +60,7 @@ function capsDetection(message: Message) {
 }
 
 function swearsDetection(message: Message) {
+    if (!message.guild) return;
     const guildChannel = message.channel as TextChannel;
 
     if (guildChannel.nsfw) return;
@@ -70,8 +71,8 @@ function swearsDetection(message: Message) {
             if (isSwearPreventionEnabled(message.guild) && hasPermissionInChannel(message.channel, 'MANAGE_MESSAGES')) {
                 message.delete();
             } else if (hasPermissionInChannel(message.channel, 'ADD_REACTIONS')) {
-                let emoji: any = guild.emojis.find(e => e.name.toLowerCase() === 'think');
-                if (!emoji) emoji = guild.emojis.find(e => e.name.toLowerCase() === ':thinking:');
+                let emoji: any = guild.emojis.cache.find(e => e.name.toLowerCase() === 'think');
+                if (!emoji) emoji = guild.emojis.cache.find(e => e.name.toLowerCase() === ':thinking:');
                 if (!emoji) emoji = '🤔';
                 message.react(emoji);
                 return;
@@ -81,6 +82,7 @@ function swearsDetection(message: Message) {
 }
 
 function unitDetection(message: Message) {
+    if (!message.guild) return;
     if (!isAutoConversionEnabled(message.guild)) return;
     if (!message.content.match(/[0-9]+/g)) return;
     const words = message.content.replace(/[^a-zA-Z0-9 ]+/g, '').replace(/  +/g, '').split(' ');

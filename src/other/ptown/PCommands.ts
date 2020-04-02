@@ -9,6 +9,7 @@ import { CustomFaceCanvas, CustomAction } from './actionDraw/CustomFaceCanvas';
 import { matchExpression } from './actionDraw/expressionUtils';
 import { ExpressionExtra } from './actionDraw/interfaces';
 import { ptChecker } from '../..';
+import { reportErrorToOwner } from '../../until/errors';
 
 const imageDataURI = require('image-data-uri');
 
@@ -76,13 +77,12 @@ export async function reactWithPTEmoji(message: Message) {
         if (!image) return;
 
         try {
-            await message.guild.createEmoji(image.dataBuffer, 'TemporaryEmoji')
-                .then(async emoji => {
-                    await message.react(emoji).finally(async () => {
-                        await message.guild.deleteEmoji(emoji);
-                    });
-                });
-        } catch (err) { console.error(err); }
+            const emoji = await message.guild.emojis.create(image.dataBuffer, 'TemporaryEmoji');
+            await message.react(emoji);
+            await emoji.delete();
+        } catch (error) {
+            reportErrorToOwner(message.client, error, 'Emoji reaction');
+        }
     }
 }
 
@@ -248,6 +248,6 @@ async function action(message: Message, language: Language) {
             const canvas = new CustomFaceCanvas(action);
             image = imageDataURI.decode(canvas.getData());
         }
-        message.channel.send(undefined, { file: image.dataBuffer });
+        message.channel.send(undefined, { files: [image.dataBuffer] });
     });
 }

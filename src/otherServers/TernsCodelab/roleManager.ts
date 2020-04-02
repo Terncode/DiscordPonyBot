@@ -1,4 +1,4 @@
-import { Message, TextChannel, RichEmbed, Guild, Role } from 'discord.js';
+import { Message, TextChannel, MessageEmbed, Guild, Role } from 'discord.js';
 
 import { checkCommand, removePrefixAndCommand, getCommandArgs } from '../../until/commandsHandler';
 import { hasPermissionInChannel } from '../../until/util';
@@ -27,12 +27,13 @@ export function roleManager(message: Message) {
 function manager(message: Message) {
     const channel = message.channel as TextChannel;
     const guild = message.guild;
+    if (!guild) return;
     const prefix = getPrefix(message.guild);
-    const embed = new RichEmbed();
-    embed.setAuthor('Pony CodeLab', guild.iconURL);
+    const embed = new MessageEmbed();
+    embed.setAuthor('Pony CodeLab', guild.iconURL() || undefined);
 
     if (!channel.name.toLowerCase().includes('role-manager')) {
-        const roleManagerChannel = guild.channels.find(c => c.name.toLowerCase().includes('role-manager'));
+        const roleManagerChannel = guild.channels.cache.find(c => c.name.toLowerCase().includes('role-manager'));
         const roleManager = roleManagerChannel ? roleManagerChannel : '#role-manager';
         embed.setColor('RED');
         if (roleManager)
@@ -78,15 +79,16 @@ function manager(message: Message) {
     }
 }
 
-function rolesList(message: Message, embed: RichEmbed) {
-    const prefix = getPrefix(message.guild);
+function rolesList(message: Message, embed: MessageEmbed) {
     const guild = message.guild;
-    const personalRoles = message.guild.roles.filter(r => r.hexColor === personalRolesColor).map(r => r.name);
+    if (!guild) return;
+    const prefix = getPrefix(guild);
+    const personalRoles = guild.roles.cache.filter(r => r.hexColor === personalRolesColor).map(r => r.name);
     embed.setTitle('Role List');
     embed.setDescription('Some roles can unlock special channels');
     if (personalRoles)
         embed.addField(`Personal roles (max ${maxPersonalRoles})`, personalRoles.join('\n'));
-    const otherRoles = guild.roles.filter(r => r.hexColor === otherRolesColor).map(r => r.name);
+    const otherRoles = guild.roles.cache.filter(r => r.hexColor === otherRolesColor).map(r => r.name);
     if (otherRoles)
         embed.addField(`Other roles`, otherRoles.join('\n'));
     const specialRoles = getSpecialRoles(guild).map(r => r.name);
@@ -99,12 +101,12 @@ function rolesList(message: Message, embed: RichEmbed) {
     else message.channel.send(stringifyEmbed(embed, message.client));
 }
 
-function addRole(message: Message, embed: RichEmbed, roleName: string) {
+function addRole(message: Message, embed: MessageEmbed, roleName: string) {
     const guild = message.guild;
-    const user = message.author;
-    const guildMember = guild.members.find(m => m.user === user);
-
-    const role = guild.roles.find(r => r.name.toLowerCase() === roleName);
+    if (!guild) return;
+    const member = message.member;
+    if (!member) return;
+    const role = guild.roles.cache.find(r => r.name.toLowerCase() === roleName);
     const prefix = getPrefix(message.guild);
 
     if (!role) {
@@ -113,7 +115,7 @@ function addRole(message: Message, embed: RichEmbed, roleName: string) {
         if (hasPermissionInChannel(message.channel, 'EMBED_LINKS')) message.channel.send(embed);
         else message.channel.send(stringifyEmbed(embed, message.client));
         return true;
-    } else if (guildMember.roles.find(r => r === role)) {
+    } else if (member.roles.cache.find(r => r === role)) {
         embed.setColor('GOLD');
         embed.addField('Info', `You already have role: \`${roleName}\``);
         if (hasPermissionInChannel(message.channel, 'EMBED_LINKS')) message.channel.send(embed);
@@ -121,12 +123,12 @@ function addRole(message: Message, embed: RichEmbed, roleName: string) {
         return true;
     }
 
-    const personalRoles = guild.roles.filter(r => r.hexColor === personalRolesColor).map(r => r);
-    const otherRoles = guild.roles.filter(r => r.hexColor === otherRolesColor).map(r => r);
+    const personalRoles = guild.roles.cache.filter(r => r.hexColor === personalRolesColor).map(r => r);
+    const otherRoles = guild.roles.cache.filter(r => r.hexColor === otherRolesColor).map(r => r);
     const specialRoles = getSpecialRoles(guild);
 
     if (personalRoles.includes(role)) {
-        const memberRoles = guildMember.roles.filter(r => r.hexColor === personalRolesColor);
+        const memberRoles = member.roles.cache.filter(r => r.hexColor === personalRolesColor);
         if (memberRoles.size > maxPersonalRoles) {
             embed.setColor('RED');
             embed.addField('Error', `Limit reached. You can have only ${maxPersonalRoles} personal roles`);
@@ -134,7 +136,7 @@ function addRole(message: Message, embed: RichEmbed, roleName: string) {
             else message.channel.send(stringifyEmbed(embed, message.client));
             return true;
         } else {
-            guildMember.addRole(role)
+            member.roles.add(role)
                 .then(() => {
                     embed.setColor('GOLD');
                     embed.addField('Info', `Personal role \`${role.name}\` has been successfully added to your account`);
@@ -149,7 +151,7 @@ function addRole(message: Message, embed: RichEmbed, roleName: string) {
                 });
         }
     } else if (otherRoles.includes(role)) {
-        guildMember.addRole(role)
+        member.roles.add(role)
             .then(() => {
                 embed.setColor('GOLD');
                 embed.addField('Info', `Role \`${role.name}\` has been successfully added to your account`);
@@ -180,33 +182,32 @@ function addRole(message: Message, embed: RichEmbed, roleName: string) {
     }
     return true;
 }
-function removeRole(message: Message, embed: RichEmbed, roleName: string) {
+function removeRole(message: Message, embed: MessageEmbed, roleName: string) {
 
     const guild = message.guild;
-    const user = message.author;
-    const guildMember = guild.members.find(m => m.user === user);
-
-    const role = guild.roles.find(r => r.name.toLowerCase() === roleName);
-
+    if (!guild) return;
+    const member = message.member;
+    if (!member) return;
+    const role = guild.roles.cache.find(r => r.name.toLowerCase() === roleName);
     if (!role) {
         embed.setColor('RED');
         embed.addField('Error', `Unable to find role: \`${roleName}\``);
         embedSend(message.channel, embed);
         return true;
-    } else if (!guildMember.roles.find(r => r === role)) {
+    } else if (!member.roles.cache.find(r => r === role)) {
         embed.setColor('GOLD');
         embed.addField('Info', `You don't have role: \`${roleName}\``);
         embedSend(message.channel, embed);
         return true;
     }
 
-    const persionalRoles = guild.roles.filter(r => r.hexColor === personalRolesColor).map(r => r);
-    const otherRoles = guild.roles.filter(r => r.hexColor === otherRolesColor).map(r => r);
+    const personalRoles = guild.roles.cache.filter(r => r.hexColor === personalRolesColor).map(r => r);
+    const otherRoles = guild.roles.cache.filter(r => r.hexColor === otherRolesColor).map(r => r);
     const specialRoles = getSpecialRoles(guild);
 
-    if (persionalRoles.includes(role)) {
+    if (personalRoles.includes(role)) {
 
-        guildMember.removeRole(role)
+        member.roles.remove(role)
             .then(() => {
                 embed.setColor('GOLD');
                 embed.addField('Info', `Personal role \`${role.name}\` has been successfully removed from your account`);
@@ -219,7 +220,7 @@ function removeRole(message: Message, embed: RichEmbed, roleName: string) {
             });
 
     } else if (otherRoles.includes(role)) {
-        guildMember.removeRole(role)
+        member.roles.remove(role)
             .then(() => {
                 embed.setColor('GOLD');
                 embed.addField('Info', `Role \`${role.name}\` has been successfully removed from your account`);
@@ -239,7 +240,7 @@ function removeRole(message: Message, embed: RichEmbed, roleName: string) {
         embed.addField('Info', `You can't just remove special role by yourself.😐`);
         embedSend(message.channel, embed);
     } else if (role.name.toLowerCase().includes('mod')) {
-        guildMember.removeRole(role)
+        member.roles.remove(role)
             .then(() => {
                 embed.setColor('RED');
                 embed.addField('Info', `Okay...😮\n\nRemoved moderator role.`);
@@ -259,27 +260,28 @@ function removeRole(message: Message, embed: RichEmbed, roleName: string) {
 
 }
 
-function requestRole(message: Message, embed: RichEmbed, roleName: string) {
+function requestRole(message: Message, embed: MessageEmbed, roleName: string) {
     const guild = message.guild;
-    const user = message.author;
-    const guildMember = guild.members.find(m => m.user === user);
+    if (!guild) return;
+    const member = message.member;
+    if (!member) return;
 
-    const role = guild.roles.find(r => r.name.toLowerCase() === roleName);
+    const role = guild.roles.cache.find(r => r.name.toLowerCase() === roleName);
 
     if (!role) {
         embed.setColor('RED');
         embed.addField('Error', `Unable to find role: \`${roleName}\``);
         embedSend(message.channel, embed);
         return;
-    } else if (guildMember.roles.find(r => r === role)) {
+    } else if (member.roles.cache.find(r => r === role)) {
         embed.setColor('GOLD');
         embed.addField('Info', `You already have this role: \`${roleName}\``);
         embedSend(message.channel, embed);
         return;
     }
 
-    const personalRoles = guild.roles.filter(r => r.hexColor === personalRolesColor).map(r => r);
-    const otherRoles = guild.roles.filter(r => r.hexColor === otherRolesColor).map(r => r);
+    const personalRoles = guild.roles.cache.filter(r => r.hexColor === personalRolesColor).map(r => r);
+    const otherRoles = guild.roles.cache.filter(r => r.hexColor === otherRolesColor).map(r => r);
     const specialRoles = getSpecialRoles(guild);
 
     const prefix = getPrefix(message.guild);
@@ -290,33 +292,32 @@ function requestRole(message: Message, embed: RichEmbed, roleName: string) {
     } else if (specialRoles.includes(role)) {
         embed.setColor('GOLD');
         embed.addField('info', `Request was sent to admin`);
-        const botLog = guild.channels.find(c => c.name.toLowerCase().includes('bot-logs')) as TextChannel;
-        if (botLog && botLog.type !== 'voice' && botLog.type !== 'category') botLog.send(`Member ${message.author} wants role ${role.name}`);
+        const botLog = guild.channels.cache.find(c => c.name.toLowerCase().includes('bot-logs')) as TextChannel;
+        if (botLog) botLog.send(`Member ${message.author} wants role ${role.name}`);
         embedSend(message.channel, embed);
     } else if (role.name.toLowerCase().includes('admin') || role.name.toLowerCase().includes('mod')) {
         embed.setColor('RED');
         embed.addField('Error', `Nope`);
-        const botLog = guild.channels.find(c => c.name.toLowerCase().includes('bot-logs')) as TextChannel;
-        if (botLog && botLog.type !== 'voice' && botLog.type !== 'category') botLog.send(`Member ${message.author} wants role ${role.name}`);
+        const botLog = guild.channels.cache.find(c => c.name.toLowerCase().includes('bot-logs')) as TextChannel;
+        if (botLog) botLog.send(`Member ${message.author} wants role ${role.name}`);
         embedSend(message.channel, embed);
         return;
     } else {
         embed.setColor('GOLD');
         embed.addField('info', `Hmm will think about that...`);
-        const botLog = guild.channels.find(c => c.name.toLowerCase().includes('bot-logs')) as TextChannel;
-        if (botLog && botLog.type !== 'voice' && botLog.type !== 'category') botLog.send(`User ${message.author} wants role ${role.name}`);
+        const botLog = guild.channels.cache.find(c => c.name.toLowerCase().includes('bot-logs')) as TextChannel;
+        if (botLog) botLog.send(`User ${message.author} wants role ${role.name}`);
         embedSend(message.channel, embed);
-
     }
 }
 
-function suggestRole(message: Message, embed: RichEmbed, roleName: string) {
+function suggestRole(message: Message, embed: MessageEmbed, roleName: string) {
     const guild = message.guild;
+    if (!guild) return;
+    const role = guild.roles.cache.find(r => r.name.toLowerCase() === roleName);
+    const guildRoles = guild.roles.cache.map(r => r);
 
-    const role = guild.roles.find(r => r.name.toLowerCase() === roleName);
-    const guildRoles = guild.roles.map(r => r);
-
-    if (guildRoles.includes(role)) {
+    if (role && guildRoles.includes(role)) {
         embed.setColor('RED');
         embed.addField('Error', `Unable to suggest existing role`);
         embedSend(message.channel, embed);
@@ -327,7 +328,6 @@ function suggestRole(message: Message, embed: RichEmbed, roleName: string) {
             embed.addField('Error', `Role name must be longer than 4 characters!...`);
             embedSend(message.channel, embed);
             return;
-
         }
 
         for (const bannedName of bannedRoleNames) {
@@ -340,19 +340,18 @@ function suggestRole(message: Message, embed: RichEmbed, roleName: string) {
         }
         embed.setColor('GOLD');
         embed.addField('info', `Role suggested...`);
-        const botLog = guild.channels.find(c => c.name.toLowerCase().includes('suggestion')) as TextChannel;
-        if (botLog && botLog.type !== 'voice' && botLog.type !== 'category') botLog.send(`User ${message.author} suggest role ${roleName}`);
+        const botLog = guild.channels.cache.find(c => c.name.toLowerCase().includes('suggestion')) as TextChannel;
+        if (botLog) botLog.send(`User ${message.author} suggest role ${roleName}`);
         embedSend(message.channel, embed);
     }
 }
 
 function getSpecialRoles(guild: Guild): Role[] {
-
     const specialRoles = [];
-    const devRole = guild.roles.find(r => r.name.toLowerCase().includes('dev'));
-    const artist = guild.roles.find(r => r.name.toLowerCase().includes('artist'));
-    const bestFriend = guild.roles.find(r => r.name.toLowerCase().includes('writer'));
-    const memeMaster = guild.roles.find(r => r.name.toLowerCase().includes('best friend'));
+    const devRole = guild.roles.cache.find(r => r.name.toLowerCase().includes('dev'));
+    const artist = guild.roles.cache.find(r => r.name.toLowerCase().includes('artist'));
+    const bestFriend = guild.roles.cache.find(r => r.name.toLowerCase().includes('writer'));
+    const memeMaster = guild.roles.cache.find(r => r.name.toLowerCase().includes('best friend'));
     if (devRole) specialRoles.push(devRole);
     if (artist) specialRoles.push(artist);
     if (bestFriend) specialRoles.push(bestFriend);

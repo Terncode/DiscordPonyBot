@@ -1,4 +1,4 @@
-import { Message, RichEmbed, TextChannel, Client } from 'discord.js';
+import { Message, MessageEmbed, TextChannel, Client } from 'discord.js';
 import * as Jimp from 'jimp';
 import { DerpibooruCommands, Language } from '../../language/langTypes';
 import { getLanguage } from '../../until/guild';
@@ -18,6 +18,8 @@ const blockedTags = ['foalcon', 'gore', 'necrophilia', 'self harm', 'rape', 'dea
 
 export const DERPIBOORU_COMMANDS: DerpibooruCommands = ['derpibooru', 'trixiebooru', 'derpi', 'db'];
 
+const coolDown = new Set<string>();
+
 interface SuperSFWSearchResult {
     ponyApi?: ResultRandom;
     derpibooru?: Image;
@@ -34,12 +36,14 @@ export function derpibooruCommand(message: Message, ignoreRestriction = false): 
 }
 
 async function derpibooru(message: Message, ignoreRestriction: boolean) {
+    const id = message.guild ? message.guild.id : message.author.id;
+    if (coolDown.has(id)) return;
+    coolDown.add(id);
     message.channel.startTyping();
     const args = removePrefixAndCommand(message).split(',').map(t => t.trim())
         .filter(t => t);
 
     const language = getLanguage(message.guild);
-
     const guildChannel = message.channel as TextChannel;
     let result: SuperSFWSearchResult = {};
     try {
@@ -47,19 +51,26 @@ async function derpibooru(message: Message, ignoreRestriction: boolean) {
             result.derpibooru = await NSFWSearch(args);
         } else if (ignoreRestriction) {
             const id = parseInt(args[0]);
-            if (!isNaN(id)) result.derpibooru = await getById(id);
+            if (!isNaN(id)) result.derpibooru = await Fetch.fetchImage(id);
             else result.derpibooru = await SFWSearch(args);
         } else result = await SuperSFWSearch(args, message.client);
     } catch (error) {
         await message.channel.stopTyping();
         message.channel.send(`🔍 ${language.derpibooru.noResult}`);
+        coolDown.delete(id);
         return;
     }
-
     if (hasPermissionInChannel(message.channel, 'EMBED_LINKS')) {
-        let embed: RichEmbed = signEmbed(message.client);
-        if (result.derpibooru) embed = await derpibooruEmbed(embed, result.derpibooru, language);
-        else if (result.ponyApi) embed = await ponyApiEmbed(embed, result.ponyApi, language);
+        let embed: MessageEmbed = signEmbed(message.client);
+        try {
+            if (result.derpibooru) embed = await derpibooruEmbed(embed, result.derpibooru, language);
+            else if (result.ponyApi) embed = await ponyApiEmbed(embed, result.ponyApi, language);
+        } catch (error) {
+            await message.channel.stopTyping();
+            message.channel.send(`🔍 ${language.derpibooru.noResult}`);
+            coolDown.delete(id);
+            return;
+        }
         await message.channel.stopTyping();
         const contentArgs = args[0] ? `\`${args.join('`, `')}\`` : '';
         if (embed) message.channel.send(contentArgs, embed);
@@ -68,9 +79,9 @@ async function derpibooru(message: Message, ignoreRestriction: boolean) {
         if (!result.derpibooru && !result.ponyApi) {
             await message.channel.stopTyping();
             message.channel.send(language.derpibooru.somethingWentWrong);
+            coolDown.delete(id);
             return;
         }
-
         let content = '';
         const url = result.derpibooru ? `${DERPIBOORU_DOMAIN}${result.derpibooru.id}` : result.ponyApi!.sourceURL;
         if (!missingPermissions.has(message.channel.id)) {
@@ -82,152 +93,104 @@ async function derpibooru(message: Message, ignoreRestriction: boolean) {
         await message.channel.stopTyping();
         message.channel.send(content);
     }
+    coolDown.delete(id);
 }
 
-function NSFWSearch(tags: string[]): Promise<Image> {
-    return new Promise(async (resolve, reject) => {
-        const options: SearchOptions = {
-            sortFormat: ResultSortFormat.RANDOM,
-            query: [...tags, ...blockedTags.map(t => `!${t}`)].join(', '),
-        };
-        try {
-            const searchResults = await Fetch.search(options);
-            if (searchResults.images.length === 0) return reject(new Error('Nothing found'));
-            const random = Math.floor(Math.random() * searchResults.images.length);
-            resolve(searchResults.images[random]);
-        } catch (err) {
-            reject(err);
-        }
-
-    });
+async function NSFWSearch(tags: string[]) {
+    const options: SearchOptions = {
+        sortFormat: ResultSortFormat.RANDOM,
+        query: [...tags, ...blockedTags.map(t => `!${t}`)].join(', '),
+    };
+    const searchResults = await Fetch.search(options);
+    if (searchResults.images.length === 0) throw new Error('Nothing found');
+    const random = Math.floor(Math.random() * searchResults.images.length);
+    return searchResults.images[random];
 }
 
-function SFWSearch(tags: string[]): Promise<Image> {
-    return new Promise(async (resolve, reject) => {
-        const options: SearchOptions = {
-
-            sortFormat: ResultSortFormat.RANDOM,
-            query: [...tags, ...blockedTags.map(t => `!${t}`)].join(', '),
-        };
-        try {
-            const searchResults = await Fetch.search(options);
-            if (searchResults.images.length === 0) return reject(new Error('Nothing found'));
-            const random = Math.floor(Math.random() * searchResults.images.length);
-            resolve(searchResults.images[random]);
-        } catch (err) {
-            reject(err);
-        }
-
-    });
+async function SFWSearch(tags: string[]) {
+    const options: SearchOptions = {
+        sortFormat: ResultSortFormat.RANDOM,
+        query: [...tags, ...blockedTags.map(t => `!${t}`)].join(', '),
+    };
+    const searchResults = await Fetch.search(options);
+    if (searchResults.images.length === 0) throw new Error('Nothing found');
+    const random = Math.floor(Math.random() * searchResults.images.length);
+    return searchResults.images[random];
 }
 
-function getById(id: string | number): Promise<Image> {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const result = await Fetch.fetchImage(id);
-            resolve(result);
-        } catch (error) {
-            reject(error);
+async function SuperSFWSearch(tags: string[], client: Client): Promise<SuperSFWSearchResult> {
+    const ponyApiResult = await ponyApiRandom(tags);
+
+    if (!ponyApiResult.derpiId) return ({ ponyApi: ponyApiResult });
+    try {
+        const image = await Fetch.fetchImage(ponyApiResult.derpiId);
+        const result: SuperSFWSearchResult = {
+            ponyApi: ponyApiResult,
+            derpibooru: image,
         }
-    });
+        return result;
+    } catch (error) {
+        reportErrorToOwner(client, error);
+        const result: SuperSFWSearchResult = {
+            ponyApi: ponyApiResult,
+        }
+        return result;
+    }
 }
 
-function SuperSFWSearch(tags: string[], client: Client): Promise<SuperSFWSearchResult> {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const ponyApiResult = await ponyApiRandom(tags);
+async function derpibooruEmbed(embed: MessageEmbed, image: Image, language: Language) {
+    embed.setColor('RANDOM');
+    embed.setAuthor('Derpibooru', DERPIBOORU_LOGO, '');
+    if (image.id) {
+        embed.setTitle(language.derpibooru.derpibooruImage);
+        embed.setURL(`${DERPIBOORU_DOMAIN}${image.id}`);
+    }
+    embed.setImage(image.representations.full);
 
-            if (!ponyApiResult.derpiId) return resolve({ ponyApi: ponyApiResult });
-            getById(ponyApiResult.derpiId)
-                .then(image => {
-                    resolve({
-                        ponyApi: ponyApiResult,
-                        derpibooru: image,
-                    });
-                }).catch(error => {
-                    // this should never happen
-                    resolve({ ponyApi: ponyApiResult });
-                    reportErrorToOwner(client, error);
-                });
-        } catch (error) {
-            reject(error);
-        }
-    });
+    if (image.artistNames && image.artistNames.length) {
+        const url = `${DERPIBOORU_DOMAIN}tags/${encodeURIComponent(slugify(`artist:${image.artistNames.join(', ')}`))}`;
+        const artist = `[${image.artistNames[0]}](${url})`;
+        embed.addField(language.derpibooru.artist, artist, true);
+    } else embed.addField(language.derpibooru, language.derpibooru.unknownArtist, true);
+
+    let uploaderName = image.uploaderName;
+    if (image.uploaderID && image.uploaderID > 0) uploaderName = `[${image.uploaderName}](https://derpibooru.org/profiles/${encodeURIComponent(image.uploaderName)})`;
+    embed.addField(language.derpibooru.uploader, uploaderName, true);
+
+    if (image.id) {
+        const commentsResult = await image.comments(undefined);
+
+        const score = `${image.favorites} ⭐ | ${image.upvotes} ⬆️ | ${image.downvotes} ⬇️ | ${commentsResult.total} 🗨️`;
+        embed.addField(language.derpibooru.score, score);
+
+        if (image.description) embed.addField(language.derpibooru.description, limitString1024(image.description));
+    }
+
+    const tags = image.tagNames.length > 10 ? `${image.tagNames.join(', ')}, ${language.derpibooru.moreTabs.replace(/&NUMBER/g, (image.tagNames.length - 10).toString())}` : image.tagNames.join(', ');
+    embed.addField(language.derpibooru.tags, tags);
+
+    try {
+        const jimp = Jimp.default.read(image.representations.thumbnailSmall);
+        embed.setColor(parseInt(ColorThief.getColorHex(jimp), 16));
+        return embed;
+    } catch (error) {
+        return embed;
+    }
 }
 
-function derpibooruEmbed(embed: RichEmbed, image: Image, language: Language): Promise<RichEmbed> {
-    return new Promise(async resolve => {
-        embed.setColor('RANDOM');
-        embed.setAuthor('Derpibooru', DERPIBOORU_LOGO, '');
-        if (image.id) {
-            embed.setTitle(language.derpibooru.derpibooruImage);
-            embed.setURL(`${DERPIBOORU_DOMAIN}${image.id}`);
-        }
-
-        embed.setImage(image.representations.full);
-
-        if (image.artistName) {
-            const url = `${DERPIBOORU_DOMAIN}tags/${encodeURIComponent(slugify(`artist:${image.artistName}`))}`;
-            const artist = `[${image.artistName}](${url})`;
-            embed.addField(language.derpibooru.artist, artist, true);
-        } else embed.addField(language.derpibooru, language.derpibooru.unknownArtist, true);
-
-        let uploaderName = image.uploaderName;
-        if (image.uploaderID && image.uploaderID > 0) uploaderName = `[${image.uploaderName}](https://derpibooru.org/profiles/${encodeURIComponent(image.uploaderName)})`;
-        embed.addField(language.derpibooru.uploader, uploaderName, true);
-
-        if (image.id) {
-            const commentsResult = await image.comments(undefined);
-            const score = `${image.favorites} ⭐ | ${image.upvotes} ⬆️ | ${image.downvotes} ⬇️ | ${commentsResult.comments.length} 🗨️`;
-            embed.addField(language.derpibooru.score, score);
-
-            if (image.description) embed.addField(language.derpibooru.description, limitString1024(image.description));
-        }
-        const tags = image.tagNames.length > 10 ? `${image.tagNames.join(', ')}, ${language.derpibooru.moreTabs.replace(/&NUMBER/g, (image.tagNames.length - 10).toString())}` : image.tagNames.join(', ');
-        embed.addField(language.derpibooru.tags, tags);
-
-        // @ts-ignore
-        Jimp.default.read(image.representations.thumbnailSmall, (err: any, image: any) => {
-            if (err) {
-                console.error(err);
-                return resolve(embed);
-            }
-
-            try {
-                embed.setColor(parseInt(ColorThief.getColorHex(image), 16));
-                return resolve(embed);
-            } catch (err) {
-                console.error(err);
-                return resolve(embed);
-            }
-        });
-    });
-}
-
-function ponyApiEmbed(embed: RichEmbed, image: ResultRandom, language: Language): Promise<RichEmbed> {
-    return new Promise(resolve => {
-
-        embed.setAuthor('theponyapi', undefined, 'www.theponyapi.com');
-        embed.setDescription(`[${language.derpibooru.source}](${image.sourceURL})`);
-        embed.setImage(image.representations.full);
-        const tags = image.tags.length > 10 ? `${image.tags.join(', ')}${language.derpibooru.moreTabs.replace(/&NUMBER/g, (image.tags.length - 10).toString())}` : image.tags.join(', ');
-        embed.addField(language.derpibooru.tags, tags);
-        // @ts-ignore
-        Jimp.default.read(image.pony.representations.thumbnailSmall, (err: any, image: any) => {
-            if (err) {
-                console.error(err);
-                return resolve(embed);
-            }
-
-            try {
-                embed.setColor(parseInt(ColorThief.getColorHex(image), 16));
-                return resolve(embed);
-            } catch (err) {
-                console.error(err);
-                return resolve(embed);
-            }
-        });
-    });
+async function ponyApiEmbed(embed: MessageEmbed, image: ResultRandom, language: Language) {
+    embed.setAuthor('theponyapi', undefined, 'www.theponyapi.com');
+    embed.setDescription(`[${language.derpibooru.source}](${image.sourceURL})`);
+    embed.setImage(image.representations.full);
+    const tags = image.tags.length > 10 ? `${image.tags.join(', ')}${language.derpibooru.moreTabs.replace(/&NUMBER/g, (image.tags.length - 10).toString())}` : image.tags.join(', ');
+    embed.addField(language.derpibooru.tags, tags);
+    try {
+        const jimp = await Jimp.default.read(image.representations.thumbSmall);
+        embed.setColor(parseInt(ColorThief.getColorHex(jimp), 16));
+        return embed;
+    } catch (error) {
+        return embed;
+    }
 }
 
 function limitString1024(text: string) {

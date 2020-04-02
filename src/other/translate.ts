@@ -14,23 +14,23 @@ const langs = ['af', 'sq', 'am', 'ar', 'hy', 'az', 'eu', 'be', 'bn', 'bs', 'bg',
 const langFullName = ['Afrikaans', 'Albanian', 'Amharic', 'Arabic', 'Armenian', 'Azerbaijani', 'Basque', 'Belarusian', 'Bengali', 'Bosnian', 'Bulgarian', 'Catalan', 'Cebuano', 'Chichewa', 'Chinese Simplified', 'Chinese Traditional', 'Corsican', 'Croatian', 'Czech', 'Danish', 'Dutch', 'English', 'Esperanto', 'Estonian', 'Filipino', 'Finnish', 'French', 'Frisian', 'Galician', 'Georgian', 'German', 'Greek', 'Gujarati', 'Haitian Creole', 'Hausa', 'Hawaiian', 'Hebrew', 'Hindi', 'Hmong', 'Hungarian', 'Icelandic', 'Igbo', 'Indonesian', 'Irish', 'Italian', 'Japanese', 'Javanese', 'Kannada', 'Kazakh', 'Khmer', 'Korean', 'Kurdish (Kurmanji)', 'Kyrgyz', 'Lao', 'Latin', 'Latvian', 'Lithuanian', 'Luxembourgish', 'Macedonian', 'Malagasy', 'Malay', 'Malayalam', 'Maltese', 'Maori', 'Marathi', 'Mongolian', 'Myanmar (Burmese)', 'Nepali', 'Norwegian', 'Pashto', 'Persian', 'Polish', 'Portuguese', 'Punjabi', 'Romanian', 'Russian', 'Samoan', 'Scots Gaelic', 'Serbian', 'Sesotho', 'Shona', 'Sindhi', 'Sinhala', 'Slovak', 'Slovenian', 'Somali', 'Spanish', 'Sundanese', 'Swahili', 'Swedish', 'Tajik', 'Tamil', 'Telugu', 'Thai', 'Turkish', 'Ukrainian', 'Urdu', 'Uzbek', 'Vietnamese', 'Welsh', 'Xhosa', 'Yiddish', 'Yoruba', 'Zulu', 'Chinese'];
 
 export const TRANSLATE_COMMANDS: TranslateCommands = ['translate', 'tr'];
+const coolDown = new Set<string>();
 
 interface TranslateResult {
 
     text: string;
     from: {
         language: {
-            didYouMean: boolean,
+            didYouMean: boolean;
             iso: string;
-        },
+        };
         text: {
-            autoCorrected: boolean,
-            value: string,
+            autoCorrected: boolean;
+            value: string;
             didYouMean: boolean;
         };
     };
     raw: string;
-
 }
 
 export function translate(message: Message): boolean {
@@ -43,6 +43,9 @@ export function translate(message: Message): boolean {
 }
 
 async function actuallyTranslate(message: Message, language: Language) {
+    const id = message.guild ? message.guild.id : message.author.id;
+    if (coolDown.has(id)) return;
+    coolDown.add(id);
     let content = removePrefixAndCommand(message);
     const args = getCommandArgs(message);
 
@@ -64,10 +67,12 @@ async function actuallyTranslate(message: Message, language: Language) {
     }
 
     if (!content.trim()) {
-        message.channel.send(`⛔ ${language.translate.nothingToTranslate}`);
+        await message.channel.send(`⛔ ${language.translate.nothingToTranslate}`);
+        coolDown.delete(id);
         return;
     }
-    await message.channel.startTyping();
+
+    message.channel.startTyping();
     try {
         const translation = await translateMessage(toLang, content);
         await message.channel.stopTyping();
@@ -76,19 +81,15 @@ async function actuallyTranslate(message: Message, language: Language) {
     } catch (error) {
         await message.channel.stopTyping();
         message.channel.send(error);
+        coolDown.delete(id);
         return;
     }
+    coolDown.delete(id);
 }
 
-function translateMessage(lang: string, text: string): Promise<TranslateResult> {
-    return new Promise((resolve, reject) => {
-        tran(text, { to: lang })
-            .then((res: TranslateResult) => {
-                resolve(res);
-            }).catch((err: any) => {
-                reject(err);
-            });
-    });
+async function translateMessage(lang: string, text: string) {
+    const response = await tran(text, { to: lang });
+    return response as TranslateResult;
 }
 
 async function sendTranslation(message: Message, toLang: string, result: TranslateResult, language: Language) {

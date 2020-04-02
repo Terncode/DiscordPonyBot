@@ -1,6 +1,7 @@
 
-import { Message, GuildMember, Client, MessageReaction, User, Role, Channel, GuildChannel, TextChannel, Guild, ClientUserGuildSettings, Emoji } from 'discord.js';
+import { Message, GuildMember, Client, MessageReaction, User, Role, Channel, GuildChannel, TextChannel, Guild, Emoji, GuildEmoji, PartialGuildMember } from 'discord.js';
 import { EventEmitter } from 'events';
+
 export declare interface CustomGuildScript {
     on(event: 'message', listener: (message: Message, callback: () => void) => void): this;
     on(event: 'messageDelete', listener: (message: Message, callback: () => void) => void): this;
@@ -13,7 +14,6 @@ export declare interface CustomGuildScript {
     on(event: 'channelDelete', listener: (channel: Channel, callback: () => void) => void): this;
     on(event: 'channelPinsUpdate', listener: (channel: Channel, time: Date, callback: () => void) => void): this;
     on(event: 'channelUpdate', listener: (oldChannel: Channel, newChannel: Channel, callback: () => void) => void): this;
-    on(event: 'clientUserGuildSettingsUpdate', listener: (clientUserGuildSettings: ClientUserGuildSettings, callback: () => void) => void): this;
 
     on(event: 'emojiCreate', listener: (emoji: Emoji, callback: () => void) => void): this;
     on(event: 'emojiDelete', listener: (emoji: Emoji, callback: () => void) => void): this;
@@ -99,7 +99,7 @@ export class CustomGuildScript extends EventEmitter {
         });
         return status;
     }
-    onEmojiCreate(emoji: Emoji): boolean {
+    onEmojiCreate(emoji: GuildEmoji): boolean {
         if (emoji.guild.id !== this.guildID) return false;
         let status = false;
         this.emit('emojiCreate', emoji, () => {
@@ -108,7 +108,7 @@ export class CustomGuildScript extends EventEmitter {
 
         return status;
     }
-    onEmojiDelete(emoji: Emoji): boolean {
+    onEmojiDelete(emoji: GuildEmoji): boolean {
         if (emoji.guild.id !== this.guildID) return false;
         let status = false;
         this.emit('emojiDelete', emoji, () => {
@@ -117,7 +117,7 @@ export class CustomGuildScript extends EventEmitter {
 
         return status;
     }
-    onEmojiUpdate(oldEmoji: Emoji, newEmoji: Emoji): boolean {
+    onEmojiUpdate(oldEmoji: GuildEmoji, newEmoji: GuildEmoji): boolean {
         if (oldEmoji.id !== newEmoji.id) return false;
         if (oldEmoji.guild.id !== this.guildID) return false;
         let status = false;
@@ -145,7 +145,7 @@ export class CustomGuildScript extends EventEmitter {
 
         return status;
     }
-    onGuildMemberAdd(member: GuildMember): boolean {
+    onGuildMemberAdd(member: GuildMember | PartialGuildMember): boolean {
         if (member.guild.id !== this.guildID) return false;
         let status = false;
         this.emit('guildMemberAdd', member, () => {
@@ -249,14 +249,7 @@ export class CustomGuildScript extends EventEmitter {
         });
         return status;
     }
-    onClientUserGuildSettingsUpdate(clientUserGuildSettings: ClientUserGuildSettings) {
-        if (clientUserGuildSettings.guildID !== this.guildID) return false;
-        let status = false;
-        this.emit('clientUserGuildSettingsUpdate', clientUserGuildSettings, () => {
-            status = true;
-        });
-        return status;
-    }
+
     onRoleCreate(role: Role): boolean {
         if (!role.guild) return false;
         if (role.guild.id !== this.guildID) return false;
@@ -307,9 +300,9 @@ export class CustomGuildScript extends EventEmitter {
     onUserUpdate(oldUser: User, newUser: User): boolean {
         if (oldUser.id !== newUser.id) return false;
         const client = oldUser.client;
-        const guild = client.guilds.find(g => g.id === this.guildID);
+        const guild = client.guilds.cache.find(g => g.id === this.guildID);
         if (!guild) return false;
-        const isUserInGuild = guild.members.find(m => m.user.id === oldUser.id);
+        const isUserInGuild = guild.members.cache.find(m => m.user.id === oldUser.id);
         if (!isUserInGuild) return false;
 
         this.emit('userUpdate', oldUser, newUser);
@@ -380,7 +373,7 @@ export class CustomGuildScript extends EventEmitter {
     }
     onStartUp(client: Client): Promise<void> {
         return new Promise(resolve => {
-            const guild = client.guilds.find(g => g.id === this.guildID);
+            const guild = client.guilds.cache.find(g => g.id === this.guildID);
             if (!guild) return resolve();
             let callbackProvided = false;
             this.emit('startup', guild, async (shouldBePromise: Promise<void>) => {
@@ -394,7 +387,7 @@ export class CustomGuildScript extends EventEmitter {
     }
     onShutDown(client: Client): Promise<void> {
         return new Promise(resolve => {
-            const guild = client.guilds.find(g => g.id === this.guildID);
+            const guild = client.guilds.cache.find(g => g.id === this.guildID);
             if (!guild) return resolve();
             let callbackProvided = false;
             this.emit('shutdown', guild, async (shouldBePromise: Promise<void>) => {

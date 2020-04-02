@@ -10,5 +10,5 @@ You need mongodb database url connection string and discord token. Then you put 
    npm run build #builds entire thing
    npm run build:watch #builds and the watches
    npm start #starts bot
-   npm run nodemon #starts bot but also watches files changes
+   npm run dev #starts bot but also watches files changes
 ```

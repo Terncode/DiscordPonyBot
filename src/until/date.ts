@@ -1,7 +1,8 @@
 import { Language } from '../language/langTypes';
 import moment from 'moment';
 
-export function momentFormat(inp: string | number | void | moment.Moment | Date | moment.MomentInputObject, language: Language, duration = false) {
+export function momentFormat(inp: string | number | void | moment.Moment | Date | moment.MomentInputObject | null, language: Language, duration = false) {
+    if (!inp) return '/';
     let time = moment(inp).format(language.timeFormatting);
     if (duration) time = `${time} (${getAge(moment(inp).toDate(), language)})`;
     return time;
