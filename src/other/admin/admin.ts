@@ -1,8 +1,9 @@
-import { isBotOwner, removeFirstWord } from '../../until/util';
-import { Message, PresenceStatusData } from 'discord.js';
+import { isBotOwner, removeFirstWord, hasPermissionInChannel } from '../../until/util';
+import { Message, PresenceStatusData, TextChannel } from 'discord.js';
 import { checkCommand, removePrefixAndCommand, getCommandArgs } from '../../until/commandsHandler';
-import { destroy, updateActivity } from '../..';
+import { destroy, updateActivity, client } from '../..';
 import { garbageCollectGuildsFromDataBase, removeDeletedChannelsFromSubscriptions } from '../../until/guild';
+import { signEmbed, stringifyEmbed } from '../../until/embeds';
 
 export function ownerCommands(message: Message): boolean {
     if (!isBotOwner(message.author)) return false;
@@ -35,7 +36,11 @@ export function ownerCommands(message: Message): boolean {
     } else if (checkCommand(message, ['clean.database.subscriptions'])) {
         cleanSubscriptionChannelsDataBase(message);
         return true;
+    } else if (checkCommand(message, ['announce'])) {
+        announce(message);
+        return true;
     }
+
     else return false;
 }
 
@@ -124,4 +129,29 @@ async function cleanSubscriptionChannelsDataBase(message: Message) {
     } catch (error) {
         message.channel.send(error.stack);
     }
+}
+async function announce(message: Message) {
+    const content = removePrefixAndCommand(message);
+    const guilds = client.guilds.cache.map(g => g);
+    let announcmentSent = 0;
+
+    for (const guild of guilds) {
+        const channel = guild.channels.cache.find(c => c.name === 'pony-logs' && c.type === 'text') as TextChannel;
+        if (channel && hasPermissionInChannel(channel, 'SEND_MESSAGES')) {
+            try {
+                const embed = signEmbed(message.client);
+                embed.setAuthor(message.author.tag, message.author.avatarURL() || undefined);
+                embed.setTitle('Announcment');
+                embed.setColor('BLUE');
+                embed.setDescription(content);
+                if (hasPermissionInChannel(channel, 'EMBED_LINKS')) {
+                    await channel.send(embed);
+                } else {
+                    await channel.send(stringifyEmbed(embed, message.client, guild));
+                }
+                announcmentSent++;
+            } catch (_) { /* ignore */ }
+        }
+    }
+    message.channel.send(`Sent ${announcmentSent} messages`);
 }

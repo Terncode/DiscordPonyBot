@@ -65,6 +65,7 @@ function manager(message: Message) {
         default:
             embed.setColor('RED');
             embed.addField('Something went wrong', `It looks like you are using commands wrong!`);
+            // eslint-disable-next-line no-case-declarations
             const help = [
                 `${prefix}list  - shows available roles`,
                 `${prefix}add <role> - adds role`,

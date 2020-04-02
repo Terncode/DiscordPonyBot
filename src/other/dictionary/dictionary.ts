@@ -74,7 +74,7 @@ async function normalWord(message: Message) {
                 await message.channel.stopTyping();
                 await message.channel.send(embed);
             } catch (error) {
-                reportErrorToOwner(message.client, error, 'normal word dictionary')
+                reportErrorToOwner(message.client, error, 'normal word dictionary');
             }
         }
     });

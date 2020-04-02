@@ -127,13 +127,13 @@ async function SuperSFWSearch(tags: string[], client: Client): Promise<SuperSFWS
         const result: SuperSFWSearchResult = {
             ponyApi: ponyApiResult,
             derpibooru: image,
-        }
+        };
         return result;
     } catch (error) {
         reportErrorToOwner(client, error);
         const result: SuperSFWSearchResult = {
             ponyApi: ponyApiResult,
-        }
+        };
         return result;
     }
 }

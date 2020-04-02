@@ -101,7 +101,7 @@ function extractPronoun(text: string | null) {
 }
 
 async function getData(query: string) {
-    const result = await axios.get(getUrl(query))
+    const result = await axios.get(getUrl(query));
     return result.data;
 }
 
@@ -109,7 +109,7 @@ function getUrl(endpoint = '', query?: string) {
     if (endpoint) {
         endpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
         endpoint = endpoint.replace(/ /g, '-');
-    };
+    }
     const url: UrlObject = {
         protocol: 'https',
         hostname: 'dictionary.cambridge.org',

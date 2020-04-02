@@ -3,7 +3,7 @@ import mongoose = require('mongoose');
 import { MongoGuild } from './databaseSchemas';
 
 export async function connectToDB(mongooseConnectionString: string): Promise<void> {
-    await mongoose.connect(mongooseConnectionString, { useNewUrlParser: true, useUnifiedTopology: true })
+    await mongoose.connect(mongooseConnectionString, { useNewUrlParser: true, useUnifiedTopology: true });
 }
 
 export async function guildFind(id: string) {
@@ -12,8 +12,8 @@ export async function guildFind(id: string) {
 }
 
 export async function getGuildsInDataBase() {
-    const result = await MongoGuild.find()
-    return result
+    const result = await MongoGuild.find();
+    return result;
 }
 
 export async function removeGuildFromDataBase(id: string) {

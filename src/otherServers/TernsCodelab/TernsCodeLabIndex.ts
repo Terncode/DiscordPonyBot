@@ -1,3 +1,4 @@
+
 import { Message, GuildChannel, Guild, TextChannel, GuildMember, MessageEmbed, DMChannel, OverwriteResolvable, NewsChannel } from 'discord.js';
 
 import { CustomGuildScript } from '../CustomGuildScript';
@@ -80,7 +81,7 @@ async function reactArt(message: Message) {
 
     if (hasPermissionInChannel(message.channel, 'ADD_REACTIONS')) {
         try {
-            await message.react('👍')
+            await message.react('👍');
             await message.react('👌');
             const neat = message.guild!.emojis.cache.find(r => r.name.toLowerCase() === 'neat');
             if (neat) await message.react(neat);
@@ -152,7 +153,7 @@ export async function enableServerFeature(guild: Guild) {
     const overwrites: OverwriteResolvable = {
         id: everyone.id,
         allow: 'SEND_MESSAGES'
-    }
+    };
 
     if (deleteChannels.length !== 0)
         for (const deleteChannel of deleteChannels) {
@@ -160,7 +161,7 @@ export async function enableServerFeature(guild: Guild) {
                 await deleteChannel.overwritePermissions([overwrites], 'Bot startup');
                 guild.client.emit('debug', `${deleteChannel.name} enabled sending message`);
             } catch (error) {
-                console.error(error)
+                console.error(error);
             }
         }
     if (roleManager) {
@@ -172,7 +173,7 @@ export async function enableServerFeature(guild: Guild) {
         }
         const prefix = getPrefix(guild);
         try {
-            await roleManager.setTopic(`${prefix}role[add / remove / request / suggest][Role name]`)
+            await roleManager.setTopic(`${prefix}role[add / remove / request / suggest][Role name]`);
             guild.client.emit('debug', `${roleManager.name} Topic Changed to '${prefix}role [add/remove/request/suggest] [Role name]'`);
         } catch (error) {
             console.error(error);
@@ -183,7 +184,7 @@ export async function enableServerFeature(guild: Guild) {
 export async function bootMessage(guild: Guild) {
     const botLogs = guild.channels.cache.find(c => c.name.toLowerCase().includes('bot-logs') && c.type === 'text') as TextChannel;
     try {
-        if (botLogs) await botLogs.send(`Bot booted version: \`${version}\``)
+        if (botLogs) await botLogs.send(`Bot booted version: \`${version}\``);
     } catch (error) {
         console.error(error);
     }
@@ -198,7 +199,7 @@ export async function disableServerFeatures(guild: Guild) {
     const overwrites: OverwriteResolvable = {
         id: everyone.id,
         deny: 'SEND_MESSAGES'
-    }
+    };
     for (const deleteChannel of deleteChannels) {
         try {
             await deleteChannel.overwritePermissions([overwrites], 'Bot shutdown');
@@ -208,7 +209,7 @@ export async function disableServerFeatures(guild: Guild) {
         }
 
         if (!hasPermissionInChannel(deleteChannel, 'READ_MESSAGE_HISTORY')) return;
-        const messages = await deleteChannel.messages.fetch({ limit: 100 })
+        const messages = await deleteChannel.messages.fetch({ limit: 100 });
         if (!messages) continue;
 
         const messageMap = messages.map(m => m);

@@ -167,7 +167,7 @@ async function changeLog(message: Message, language: Language) {
         if (hasPermissionInChannel(message.channel, 'EMBED_LINKS'))
             message.channel.send(data.richEmbed);
         else {
-            const changes = data.changeLog.changes.join('\n')
+            const changes = data.changeLog.changes.join('\n');
             message.channel.send(`\`\`\`\n${data.changeLog.version}\n${changes.length > 2000 ? `changes.slice(0,2000)` : changes}\`\`\``);
         }
     } catch (error) {
@@ -236,7 +236,7 @@ async function action(message: Message, language: Language) {
 
             const action: CustomAction = {
                 blush: !random(0, 25),
-                crying: !!random(0, 10) ? 0 : random(0, 2),
+                crying: random(0, 10) ? 0 : random(0, 2),
                 hearts: !random(0, 10),
                 rightIris: eye ? look : random(0, 6),
                 right: eye ? eye : random(0, 24),

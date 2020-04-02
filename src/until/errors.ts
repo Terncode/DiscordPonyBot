@@ -7,12 +7,11 @@ export async function reportErrorToOwner(client: Client, shouldBeError: any, not
     const user = getBotOwner(client);
     if (user) {
         const dm = await user.createDM();
-        dm
         try {
             if (shouldBeError && shouldBeError.stack) dm.send(`${note}\n${shouldBeError.stack}`);
             else dm.send(`${note}${shouldBeError.toString()}`);
         } catch (error) {
-            console.error(error, shouldBeError)
+            console.error(error, shouldBeError);
         }
     }
     console.error(shouldBeError);

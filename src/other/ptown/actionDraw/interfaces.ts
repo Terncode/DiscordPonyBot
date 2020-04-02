@@ -886,7 +886,7 @@ export interface EditorPlaceAction {
 
 export interface EditorMoveAction {
     type: 'move';
-    entities: { id: number; x: number; y: number; }[];
+    entities: { id: number; x: number; y: number }[];
 }
 
 export interface EditorRemoveAction {
@@ -1037,12 +1037,6 @@ export interface PalettePonyInfo extends PonyInfoBase<Palette, PaletteSpriteSet>
     backLegs: PaletteSpriteSet | undefined;
     frontLegs: PaletteSpriteSet | undefined;
     magicColorValue: number;
-}
-
-export interface PonyInfo extends PonyInfoBase<string, SpriteSet<string>> {
-}
-
-export interface PonyInfoNumber extends PonyInfoBase<number, SpriteSet<number>> {
 }
 
 export interface ColorExtra {
