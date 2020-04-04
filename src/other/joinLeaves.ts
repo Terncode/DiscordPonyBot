@@ -18,7 +18,7 @@ export async function clientGuildJoin(guild: Guild) {
                     id: everyone.id,
                     deny: ['ADD_REACTIONS', 'SEND_MESSAGES'],
                     allow: ['EMBED_LINKS', 'READ_MESSAGE_HISTORY'],
-                }
+                };
                 await ponyLogsFreshlyCreated.overwritePermissions([overwrite]);
             }
         } catch (error) {
@@ -59,7 +59,7 @@ export function onGuildMemberJoin(member: GuildMember | PartialGuildMember) {
 
     embed.addField(language.logs.info, language.logs.joined.replace(/&USER/g, member.user.tag));
     embed.addField(language.logs.accountAge, momentFormat(member.user.createdAt, language, true));
-    // embed.setThumbnail(member.user.avatarURL);
+    // embed.setThumbnail(member.user.avatarURL); 
     if (hasPermissionInChannel(channel, 'EMBED_LINKS')) channel.send(embed);
     else channel.send(stringifyEmbed(embed, member.client));
 }
@@ -67,6 +67,7 @@ export function onGuildMemberLeave(member: GuildMember | PartialGuildMember) {
     if (!member.user) return;
     // if (member.user.bot) return;
     const guild = member.guild;
+    if (!guild.available) return;
     const channel = guild.channels.cache.find(c => c.name.toLowerCase().includes('pony-log') && c.type === 'text') as TextChannel;
     if (!channel) return;
     const language = getLanguage(member.guild);

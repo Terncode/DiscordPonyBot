@@ -40,8 +40,14 @@ export async function createGuildDataBase(guild: Guild) {
     const id = guild.id;
     if (!guild.id) throw new Error('Guild does not have ID');
 
-    const mongoGuild = await guildFind(id)
+    const mongoGuild = await guildFind(id);
     if (mongoGuild) return false;
+    guilds[guild.id] = {
+        language: ENGLISH.iso,
+        prefix: config.PREFIX,
+        autoConversion: false,
+        swearPrevention: false,
+    };
     const post = new MongoGuild(
         {
             id,
@@ -60,7 +66,6 @@ export async function createGuildDataBase(guild: Guild) {
 
 export async function changeGuildPrefix(guild: Guild, prefix: string) {
     prefix = prefix.toLowerCase().replace(/ /g, '');
-
     const guildDB = await guildFind(guild.id);
     if (!guildDB) throw new Error('Unable to find guild');
     guildDB.prefix = prefix;
@@ -171,7 +176,7 @@ export async function setup(client: Client) {
             swearPrevention: g.swearPrevention,
             autoConversion: g.autoConversion,
         };
-    })
+    });
 }
 
 async function checkForMissingGuildAndAddItToDataBase(client: Client): Promise<void> {
@@ -202,7 +207,7 @@ export async function garbageCollectGuildsFromDataBase(client: Client) {
 export async function removeDeletedChannelsFromSubscriptions(client: Client) {
     const guildsDB = await getGuildsInDataBase();
     let shouldUpdate = false;
-    const removedChannelsId: string[] = []
+    const removedChannelsId: string[] = [];
 
     for (const guildDB of guildsDB) {
         const guild = client.guilds.cache.find(g => g.id === guildDB.id);
@@ -237,7 +242,7 @@ export async function removeDeletedChannelsFromSubscriptions(client: Client) {
             guildDB.imageDeliveryChannels = imageDeliveryChannels;
             await guildDB.save();
         }
-    };
+    }
     return removedChannelsId;
 }
 
@@ -258,7 +263,7 @@ export async function addImageDeliveryChannel(guild: Guild, channel: TextChannel
 export async function addPTUpdateChannel(guild: Guild, channel: TextChannel) {
     const guildDB = await guildFind(guild.id);
     if (!guildDB) throw new Error('Unable to find guild');
-    if (guildDB.ptUpdateChannels.includes(channel.id)) return false
+    if (guildDB.ptUpdateChannels.includes(channel.id)) return false;
 
     guildDB.ptUpdateChannels.push(channel.id);
     await guildDB.save();
