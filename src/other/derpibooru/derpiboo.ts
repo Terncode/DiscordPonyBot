@@ -16,7 +16,7 @@ const DERPIBOORU_DOMAIN = 'https://derpibooru.org/';
 const DERPIBOORU_LOGO = 'https://derpicdn.net/img/view/2018/10/5/1848628.jpeg';
 const blockedTags = ['foalcon', 'gore', 'necrophilia', 'self harm', 'rape', 'death', 'suicide'];
 
-export const DERPIBOORU_COMMANDS: DerpibooruCommands = ['derpibooru', 'trixiebooru', 'derpi', 'db'];
+export const DERPIBOORU_COMMANDS: DerpibooruCommands = ['derpibooru', 'trixiebooru', 'derpi', 'db', 'pony', 'ponies'];
 
 const coolDown = new Set<string>();
 
@@ -63,9 +63,22 @@ async function derpibooru(message: Message, ignoreRestriction: boolean) {
     if (hasPermissionInChannel(message.channel, 'EMBED_LINKS')) {
         let embed: MessageEmbed = signEmbed(message.client);
         try {
-            if (result.derpibooru) embed = await derpibooruEmbed(embed, result.derpibooru, language);
+            if (result.derpibooru) {
+                try {
+                   const dembed = await derpibooruEmbed(embed, result.derpibooru, language); 
+                   embed = dembed;
+                } catch (error) {
+                    console.error(error);
+                    if (result.ponyApi) {
+                        embed = await ponyApiEmbed(embed, result.ponyApi, language, true);
+                    } else {
+                        throw new Error('No images found');
+                    }
+                }
+            }
             else if (result.ponyApi) embed = await ponyApiEmbed(embed, result.ponyApi, language);
         } catch (error) {
+            console.log(error);
             await message.channel.stopTyping();
             message.channel.send(`🔍 ${language.derpibooru.noResult}`);
             coolDown.delete(id);
@@ -73,8 +86,8 @@ async function derpibooru(message: Message, ignoreRestriction: boolean) {
         }
         await message.channel.stopTyping();
         const contentArgs = args[0] ? `\`${args.join('`, `')}\`` : '';
-        if (embed) message.channel.send(contentArgs, embed);
-        else message.channel.send(language.derpibooru.somethingWentWrong);
+        if (embed) await message.channel.send(contentArgs, embed);
+        else await message.channel.send(language.derpibooru.somethingWentWrong);
     } else {
         if (!result.derpibooru && !result.ponyApi) {
             await message.channel.stopTyping();
@@ -153,7 +166,7 @@ async function derpibooruEmbed(embed: MessageEmbed, image: Image, language: Lang
         embed.addField(language.derpibooru.artist, artist, true);
     } else embed.addField(language.derpibooru, language.derpibooru.unknownArtist, true);
 
-    let uploaderName = image.uploaderName;
+    let uploaderName = typeof image.uploaderName === 'string' && image.uploaderName ? image.uploaderName : 'Background pony' ;
     if (image.uploaderID && image.uploaderID > 0) uploaderName = `[${image.uploaderName}](https://derpibooru.org/profiles/${encodeURIComponent(image.uploaderName)})`;
     embed.addField(language.derpibooru.uploader, uploaderName, true);
 
@@ -170,7 +183,7 @@ async function derpibooruEmbed(embed: MessageEmbed, image: Image, language: Lang
     embed.addField(language.derpibooru.tags, tags);
 
     try {
-        const jimp = Jimp.default.read(image.representations.thumbnailSmall);
+        const jimp = Jimp.read(image.representations.thumbnailSmall);
         embed.setColor(parseInt(ColorThief.getColorHex(jimp), 16));
         return embed;
     } catch (error) {
@@ -178,14 +191,18 @@ async function derpibooruEmbed(embed: MessageEmbed, image: Image, language: Lang
     }
 }
 
-async function ponyApiEmbed(embed: MessageEmbed, image: ResultRandom, language: Language) {
-    embed.setAuthor('theponyapi', undefined, 'www.theponyapi.com');
+async function ponyApiEmbed(embed: MessageEmbed, image: ResultRandom, language: Language, fallback?: boolean) {
+    embed.author = null;
+    embed.setURL('https://theponyapi.com/')
+    embed.setTitle('The pony api');
     embed.setDescription(`[${language.derpibooru.source}](${image.sourceURL})`);
     embed.setImage(image.representations.full);
     const tags = image.tags.length > 10 ? `${image.tags.join(', ')}${language.derpibooru.moreTabs.replace(/&NUMBER/g, (image.tags.length - 10).toString())}` : image.tags.join(', ');
     embed.addField(language.derpibooru.tags, tags);
+    if(fallback)
+    embed.setFooter('Using fallback method');
     try {
-        const jimp = await Jimp.default.read(image.representations.thumbSmall);
+        const jimp = await Jimp.read(image.representations.thumbSmall);
         embed.setColor(parseInt(ColorThief.getColorHex(jimp), 16));
         return embed;
     } catch (error) {
