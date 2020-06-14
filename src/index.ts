@@ -11,7 +11,7 @@ import { PTUpdateChecker } from './other/ptown/updateChecker';
 
 let idleTimeout: NodeJS.Timeout | undefined;
 export const client = new Client();
-export const version = 'v31/03/2020';
+export const version = 'v14/06/2020';
 export let inviteLink: string;
 export let config: Config;
 export let ptChecker: PTUpdateChecker;
