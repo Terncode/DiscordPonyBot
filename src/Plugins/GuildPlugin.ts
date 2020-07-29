@@ -331,7 +331,7 @@ export class GuildPlugin extends EventEmitter {
         this.emit('userUpdate', oldUser, newUser);
         return false;
     }
-    onVoiceStateUpdate(oldVoiceState: VoiceState, newVoiceState:VoiceState): boolean {
+    onVoiceStateUpdate(oldVoiceState: VoiceState, newVoiceState: VoiceState): boolean {
         if (!oldVoiceState.guild) return false;
         if (!newVoiceState.guild) return false;
         if (oldVoiceState.guild.id !== this.guildID) return false;
