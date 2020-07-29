@@ -1,4 +1,4 @@
-import { Message, GuildMember, Client, Guild, User, PartialGuildMember, PartialUser } from 'discord.js';
+import { Message, GuildMember, Guild, User, PartialGuildMember, PartialUser } from 'discord.js';
 
 import { stats } from './other/misc/stats';
 import { translate } from './other/translate';
@@ -15,15 +15,16 @@ import { miscellaneous } from './other/misc/miscellaneous';
 import { ownerCommands } from './other/admin/admin';
 import { hasPermissionInChannel } from './until/util';
 import { guildAdmin } from './other/admin/guildAdmin';
-import { getPrefix, getLanguage } from './until/guild';
-import { ternsCodeLab } from './otherServers/TernsCodelab/TernsCodeLabIndex';
+import { getPrefix, getLanguage, ignoredChannels } from './until/guild';
+import { ternsCodeLab } from './Plugins/TernsCodelab/TernsCodeLabIndex';
 import { onGuildMemberJoin, onGuildMemberLeave, onGuildMemberBan, onGuildMemberBanRemove } from './other/joinLeaves';
 
 export async function onMessage(message: Message) {
     if (!hasPermissionInChannel(message.channel, 'SEND_MESSAGES')) return;
-
-    // bot addons
-    if (ternsCodeLab.onMessage(message)) return;
+    if (ignoredChannels.includes(message.channel.id)) {
+        if (guildAdmin(message)) return;
+        return;
+    }
 
     // Defaults
     if (message.author.bot) return; // If its bot we ignore
@@ -62,10 +63,6 @@ export function guildMemberRemove(guildMember: GuildMember | PartialGuildMember)
     onGuildMemberLeave(guildMember);
 }
 
-export async function onStartUp(client: Client) {
-    await ternsCodeLab.onStartUp(client);
-}
-
 export function guildBanAdd(guild: Guild, user: User | PartialUser) {
     onGuildMemberBan(guild, user);
 }
@@ -74,6 +71,3 @@ export function guildBanRemove(guild: Guild, user: User | PartialUser) {
     onGuildMemberBanRemove(guild, user);
 }
 
-export async function onShutDown(client: Client) {
-    await ternsCodeLab.onShutDown(client);
-}

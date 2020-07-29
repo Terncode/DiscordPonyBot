@@ -1273,6 +1273,10 @@ function createBadWords(fast: boolean) {
 
    const badWordsOther = [
       '👉👌',
+      ':point_right::ok_hand:',
+      ':point_right: :ok_hand:',
+      ':ok_hand::point_left:',
+      ':ok_hand: :point_left:',
       'sexoanal',
       'masturbar',
       'cykably[ae]t',

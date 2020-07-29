@@ -108,6 +108,7 @@ export const ENGLISH: Language = {
             ban: '&PREFIX&COMMAND [user] [reason] - bans user',
             kick: '&PREFIX&COMMAND [user] [reason] - kicks user',
             purge: '&PREFIX&COMMAND [number] [user] - purge messages',
+            setFlag: '&PREFIX&COMMAND [ignore, do-not-react, remove-swears, clear] - set channel flag'
         },
 
         commands: {
@@ -224,8 +225,22 @@ export const ENGLISH: Language = {
         featureEnabled: '&FEATURE has been enabled',
         featureAlreadyDisabled: '&FEATURE is already disabled',
         featureAlreadyEnabled: '&FEATURE is already enabled',
+        ignoreChannel: 'test',
         true: ['on', 'true', 'yes'],
         false: ['off', 'false', 'no'],
+
+        flagClear: ['clear'],
+        flagDoNotReact: ['do-not-react', 'ignore-reaction'],
+        flagIgnore: ['ignore', ' block'],
+        flagPreventSwears: ['prevent-swears','no-swears'],
+        flagUnknownFlag: 'Unknown flag please use help',
+
+        flagClearMessage: 'Flags has been cleared',
+        flagDoNotReactMessage: 'Bot will not react in this channel',
+        flagIgnoreMessage: 'Bot will ignore messages in this channel',
+        flagPreventSwearsMessage: 'Bot will remove messages that contain swears',
+        flagSomethingWentWrong: 'Something went wrong try again later',
+
         commands: {
             changeLanguage: [],
             changePrefix: [],
@@ -234,6 +249,7 @@ export const ENGLISH: Language = {
             swearPrevention: [],
             autoConversion: [],
             purge: [],
+            setFlag: [],
             ban: [],
             kick: [],
             purgeAll: [],

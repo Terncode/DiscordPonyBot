@@ -156,6 +156,7 @@ interface Help {
         ponyImages: string;
         swearProtection: string;
         autoUnitConversion: string;
+        setFlag: string;
     };
     commands: {
         helpCommands: HelpCommands;
@@ -279,6 +280,20 @@ export interface GuildAdmin {
     featureAlreadyDisabled: string;
     autoConversion: string;
     swearProtection: string;
+    ignoreChannel: string;
+
+    //flags
+    flagIgnore: string[];
+    flagClear: string[];
+    flagPreventSwears: string[];
+    flagDoNotReact: string[];
+
+    flagIgnoreMessage: string;
+    flagClearMessage: string;
+    flagPreventSwearsMessage: string;
+    flagDoNotReactMessage: string;
+    flagUnknownFlag: string;
+    flagSomethingWentWrong: string;
 
     true: string[];
     false: string[];
@@ -292,6 +307,7 @@ export interface GuildAdminCommands {
     autoConversion: string[];
     subscribeToPTUpdates: string[];
     subscribeToPonyImages: string[];
+    setFlag: string[];
     kick: string[];
     ban: string[];
     purge: string[];

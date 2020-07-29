@@ -42,3 +42,11 @@ export function extractMessage(messages: Message | Message[], callback: (message
     if (Array.isArray(messages)) for (const msg of messages) callback(msg);
     else callback(messages);
 }
+
+
+export function removeSomeItemFromArray(array: any[], item: any) {
+    const indexOf = array.indexOf(item);
+    if (indexOf === -1) return false;
+    array.splice(indexOf,1);
+    return true;
+}

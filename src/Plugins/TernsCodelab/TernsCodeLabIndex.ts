@@ -1,7 +1,7 @@
 
 import { Message, GuildChannel, Guild, TextChannel, GuildMember, MessageEmbed, DMChannel, OverwriteResolvable, NewsChannel } from 'discord.js';
 
-import { CustomGuildScript } from '../CustomGuildScript';
+import { GuildPlugin } from '../GuildPlugin';
 import { HELP_COMMANDS, helpEntries, sendHelpEmbed } from '../../other/misc/help';
 import { getLanguage, getPrefix } from '../../until/guild';
 import { checkCommand } from '../../until/commandsHandler';
@@ -15,8 +15,9 @@ import { stringifyEmbed } from '../../until/embeds';
 import { reportErrorToOwner } from '../../until/errors';
 const ColorThief = require('color-thief-jimp');
 
+
 // https://discord.gg/HPvbWYp
-export const ternsCodeLab = new CustomGuildScript('560542969896239105');
+export const ternsCodeLab = new GuildPlugin('621726901420949504');
 
 ternsCodeLab.on('message', (message, doNotExecuteOtherCommands) => {
     if (help(message)) return doNotExecuteOtherCommands();

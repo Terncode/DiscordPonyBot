@@ -141,7 +141,10 @@ function adminHelp(language: Language, prefix: string) {
             .replace(/&COMMAND/g, [...language.guildAdmin.commands.ban, ...GUILD_ADMIN_COMMANDS.ban][0]),
         repPre(language.help.guildAdminHelp.purge, prefix)
             .replace(/&COMMAND/g, [...language.guildAdmin.commands.purge, ...GUILD_ADMIN_COMMANDS.purge][0]),
+        repPre(language.help.guildAdminHelp.setFlag, prefix)
+            .replace(/&COMMAND/g, [...language.guildAdmin.commands.setFlag, ...GUILD_ADMIN_COMMANDS.setFlag][0]),
     ];
+
     return lang;
 }
 

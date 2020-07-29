@@ -2,7 +2,7 @@ import { Message, TextChannel } from 'discord.js';
 
 import { hasBadWords } from './ptown/swears';
 import { hasPermissionInChannel } from '../until/util';
-import { isSwearPreventionEnabled, isAutoConversionEnabled } from '../until/guild';
+import { isSwearPreventionEnabled, isAutoConversionEnabled, doNotReactChannels, preventSwearsChannels } from '../until/guild';
 const IM = require('convert-units');
 
 interface ObjectWithDynamicNames {
@@ -41,15 +41,40 @@ const fromToUnit: ObjectWithDynamicNames = {
     'oz': 'g',
     'g': 'oz',
 };
-
+const alreadyWarned = new Set();
 export function chatMonitor(message: Message) {
     if (!message.guild) return;
-    capsDetection(message);
-    swearsDetection(message);
+    if (preventSwearsChannels.includes(message.channel.id) && hasPermissionInChannel(message.channel, 'MANAGE_MESSAGES')) {
+        const content = message.content;
+        if (hasBadWords(content)) {    
+            message.delete();
+            if(content.length > 50 && content.length < 1940) {
+                message.author.createDM().then(dm => {
+                    if(alreadyWarned.has(message.author.id)) {
+                        dm.send(`Your deleted message: ${content}`);
+                    } else {
+                        alreadyWarned.add(message.author.id);
+                        dm.send(`You cannot use swears that channel. Your deleted message: ${content}`);
+                    }
+                }).catch(() => {});
+            }
+        }
+        return;
+    }
+
+    if (!doNotReactChannels.includes(message.channel.id)) {
+        swearsDetection(message);
+        capsDetection(message);
+        return;
+    }
     unitDetection(message);
 }
 
 function capsDetection(message: Message) {
+    if (!message.guild) return;
+    const guildChannel = message.channel as TextChannel;
+
+    if (guildChannel.nsfw) return;
     if (hasPermissionInChannel(message.channel, 'ADD_REACTIONS')) {
         const msg = message.content.replace(/[^a-zA-Z:,]+/g, '');
         const numUpper = (msg.match(/[A-Z]/g) || []).length;

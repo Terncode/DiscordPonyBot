@@ -6,6 +6,8 @@ import { MongoGuild } from './databaseSchemas';
 import { guildFind, getGuildsInDataBase, removeGuildFromDataBase } from './database';
 import * as path from 'path';
 import * as fs from 'fs';
+import { removeSomeItemFromArray } from './util';
+import { reportErrorToOwner } from './errors';
 const languageFolder = path.join(__dirname, '../../languages');
 
 interface Guilds {
@@ -24,6 +26,14 @@ const languages: Languages = {};
 languages[ENGLISH.iso] = ENGLISH;
 
 const guilds: Guilds = {};
+
+export const ignoredChannels: string[] = [];
+export const doNotReactChannels: string[] = [];
+export const preventSwearsChannels: string[] = [];
+const ignore = 'ignore';
+const doNotReact = 'do-not-react';
+const preventSwears = 'prevent-swears'; 
+
 
 export function getPrefix(guild?: Guild | null) {
     if (!guild) return config.PREFIX;
@@ -55,6 +65,7 @@ export async function createGuildDataBase(guild: Guild) {
             prefix: config.PREFIX,
             swearPrevention: false,
             autoConversion: false,
+            emojiReaction: true,
             ptUpdateChannels: [],
             imageDeliveryUpdatesChannels: [],
         });
@@ -176,6 +187,27 @@ export async function setup(client: Client) {
             swearPrevention: g.swearPrevention,
             autoConversion: g.autoConversion,
         };
+        const channelFlags = g.channelFlags || [];
+        channelFlags.forEach(raw => {
+            const [id, flag] = raw.split('|');
+            switch (flag) {
+                case ignore:
+                    ignoredChannels.push(id);
+                break;
+                case doNotReact:
+                    doNotReactChannels.push(id);
+                break;
+                case preventSwears:
+                    preventSwearsChannels.push(id);
+                break;
+                default:
+                    console.error(`Unknown flag ${flag}`);
+                break;
+            }
+
+        });
+
+
     });
 }
 
@@ -326,6 +358,70 @@ export function isSwearPreventionEnabled(guild: Guild) {
 export function isAutoConversionEnabled(guild: Guild) {
     return guilds[guild.id].autoConversion;
 }
+
+export enum ChannelFlag {
+    Clear,
+    DoNotReact,
+    PreventSwears,
+    Ignore,
+} 
+
+export async function setFlagToChannel(channel: TextChannel, flag: ChannelFlag) {
+    const guildDB = await guildFind(channel.guild.id);
+    if (!guildDB) throw new Error('Unable to find guild');
+    const id = channel.id;
+    const channelFlags = guildDB.channelFlags || [];
+
+    switch (flag) {
+        case ChannelFlag.Clear:
+            guildDB.channelFlags = [];
+            removeSomeItemFromArray(ignoredChannels, id);
+            removeSomeItemFromArray(doNotReactChannels, id);
+            removeSomeItemFromArray(preventSwearsChannels, id);
+        break;
+        case ChannelFlag.DoNotReact:
+            if (!doNotReactChannels.includes(id)) {
+                doNotReactChannels.push(id);
+            }
+            // eslint-disable-next-line no-case-declarations
+            const dateBaseString = `${id}|${doNotReact}`;
+            if (!channelFlags.includes(dateBaseString)) {
+                channelFlags.push(dateBaseString);
+            }
+        break;
+        case ChannelFlag.Ignore:
+            if (!ignoredChannels.includes(id)) {
+                ignoredChannels.push(id);
+            }
+            // eslint-disable-next-line no-case-declarations
+            const dateBaseString1 = `${id}|${ignore}`;
+            if (!channelFlags.includes(dateBaseString1)) {
+                channelFlags.push(dateBaseString1);
+            }
+        break;
+        case ChannelFlag.PreventSwears:
+            if (!preventSwearsChannels.includes(id)) {
+                preventSwearsChannels.push(id);
+            }
+            // eslint-disable-next-line no-case-declarations
+            const dateBaseString2 = `${id}|${preventSwears}`;
+            if (!channelFlags.includes(dateBaseString2)) {
+                channelFlags.push(dateBaseString2);
+            }
+        break;
+        default:
+            throw new Error('Unknown channel flag');
+    }
+    try {
+        await guildDB.save();
+        return true;
+    } catch (error) {
+        reportErrorToOwner(channel.client, error);
+        return false;
+    }
+
+}
+
 
 export function findGuildMembers(query: string, guild: Guild) {
     const finders = [

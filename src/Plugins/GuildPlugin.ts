@@ -1,14 +1,14 @@
 
-import { Message, GuildMember, Client, MessageReaction, User, Role, Channel, GuildChannel, TextChannel, Guild, Emoji, GuildEmoji, PartialGuildMember } from 'discord.js';
+import { Message, GuildMember, Client, MessageReaction, User, Role, Channel, GuildChannel, TextChannel, Guild, Emoji, GuildEmoji, PartialGuildMember, PartialMessage, PartialUser, Collection, Speaking, PartialDMChannel, VoiceState } from 'discord.js';
 import { EventEmitter } from 'events';
 
-export declare interface CustomGuildScript {
+export declare interface GuildPlugin {
     on(event: 'message', listener: (message: Message, callback: () => void) => void): this;
-    on(event: 'messageDelete', listener: (message: Message, callback: () => void) => void): this;
-    on(event: 'messageReactionAdd', listener: (messageReaction: MessageReaction, user: User, callback: () => void) => void): this;
-    on(event: 'messageReactionRemove', listener: (messageReaction: MessageReaction, user: User, callback: () => void) => void): this;
-    on(event: 'messageReactionRemoveAll', listener: (messageReaction: MessageReaction, callback: () => void) => void): this;
-    on(event: 'messageUpdate', listener: (oldMessage: Message, newMessage: Message, callback: () => void) => void): this;
+    on(event: 'messageDelete', listener: (message: Message | PartialMessage, callback: () => void) => void): this;
+    on(event: 'messageReactionAdd', listener: (messageReaction: MessageReaction, user: User | PartialUser, callback: () => void) => void): this;
+    on(event: 'messageReactionRemove', listener: (messageReaction: MessageReaction, user: User | PartialUser, callback: () => void) => void): this;
+    on(event: 'messageReactionRemoveAll', listener: (message: Message | PartialMessage, callback: () => void) => void): this;
+    on(event: 'messageUpdate', listener: (oldMessage: Message | PartialMessage, newMessage: Message | PartialMessage, callback: () => void) => void): this;
 
     on(event: 'channelCreate', listener: (channel: Channel, callback: () => void) => void): this;
     on(event: 'channelDelete', listener: (channel: Channel, callback: () => void) => void): this;
@@ -19,20 +19,17 @@ export declare interface CustomGuildScript {
     on(event: 'emojiDelete', listener: (emoji: Emoji, callback: () => void) => void): this;
     on(event: 'emojiUpdate', listener: (oldEmoji: Emoji, newEmoji: Emoji, callback: () => void) => void): this;
 
-    on(event: 'guildBanAdd', listener: (guild: Guild, user: User, callback: () => void) => void): this;
-    on(event: 'guildBanRemove', listener: (guild: Guild, user: User, callback: () => void) => void): this;
-
-    on(event: 'guildCreate', listener: (guild: Guild, callback: () => void) => void): this;
-    on(event: 'guildDelete', listener: (guild: Guild, callback: () => void) => void): this;
+    on(event: 'guildBanAdd', listener: (guild: Guild, user: User | PartialUser, callback: () => void) => void): this;
+    on(event: 'guildBanRemove', listener: (guild: Guild, user: User | PartialUser, callback: () => void) => void): this;
 
     on(event: 'guildIntegrationsUpdate', listener: (guild: Guild, callback: () => void) => void): this;
 
     on(event: 'guildMemberAdd', listener: (member: GuildMember, callback: () => void) => void): this;
     on(event: 'guildMemberAvailable', listener: (member: GuildMember, callback: () => void) => void): this;
     on(event: 'guildMemberRemove', listener: (member: GuildMember, callback: () => void) => void): this;
-    on(event: 'guildMembersChunk', listener: (members: GuildMember[], guild: Guild, callback: () => void) => void): this;
-    on(event: 'guildMemberSpeaking', listener: (member: GuildMember, speaking: boolean, callback: () => void) => void): this;
-    on(event: 'guildMemberUpdate', listener: (oldMember: GuildMember, newMember: GuildMember, callback: () => void) => void): this;
+    on(event: 'guildMembersChunk', listener: (members: Collection<string, GuildMember | PartialGuildMember>, guild: Guild, callback: () => void) => void): this;
+    on(event: 'guildMemberSpeaking', listener: (guildMember: GuildMember | PartialGuildMember, speaking: Readonly<Speaking>, callback: () => void) => void): this;
+    on(event: 'guildMemberUpdate', listener: (oldMember: GuildMember | PartialGuildMember, newMember: GuildMember | PartialGuildMember, callback: () => void) => void): this;
 
     on(event: 'guildUnavailable', listener: (guild: Guild, callback: () => void) => void): this;
     on(event: 'guildUpdate', listener: (oldGuild: Guild, newGuild: Guild, callback: () => void) => void): this;
@@ -40,21 +37,56 @@ export declare interface CustomGuildScript {
     on(event: 'roleCreate', listener: (role: Role, callback: () => void) => void): this;
     on(event: 'roleDelete', listener: (role: Role, callback: () => void) => void): this;
     on(event: 'roleUpdate', listener: (oldRole: Role, newRole: Role, callback: () => void) => void): this;
-    on(event: 'typingStart', listener: (channel: Channel, user: User, callback: () => void) => void): this;
-    on(event: 'typingStop', listener: (channel: Channel, user: User, callback: () => void) => void): this;
+    on(event: 'typingStart', listener: (channel: Channel | PartialDMChannel, user: User | PartialUser, callback: () => void) => void): this;
 
-    on(event: 'userUpdate', listener: (oldUser: User, newUser: User) => void): this;
+    on(event: 'userUpdate', listener: (oldUser: User | PartialUser, newUser: User | PartialUser) => void): this;
 
-    on(event: 'voiceStateUpdate', listener: (oldMember: GuildMember, newMember: GuildMember, callback: () => void) => void): this;
+    on(event: 'voiceStateUpdate', listener: (oldVoiceState: VoiceState, newVoiceState: VoiceState, callback: () => void) => void): this;
     on(event: 'webhookUpdate', listener: (channel: Channel, callback: () => void) => void): this;
 
     on(event: 'startup', listener: (guild: Guild, callback: (promise: Promise<void>) => void) => void): this;
     on(event: 'shutdown', listener: (guild: Guild, callback: (promise: Promise<void>) => void) => void): this;
 }
 
-export class CustomGuildScript extends EventEmitter {
+export class GuildPlugin extends EventEmitter {
 
-    constructor(private guildID: string) {
+    public static readonly listenerList = [
+        'message',
+        'messageDelete',
+        'messageReactionAdd',
+        'messageReactionRemove',
+        'messageReactionRemoveAll',
+        'messageUpdate',
+        'channelCreate',
+        'channelDelete',
+        'channelPinsUpdate',
+        'channelUpdate',
+        'emojiCreate',
+        'emojiDelete',
+        'emojiUpdate',
+        'guildBanAdd',
+        'guildBanRemove',
+        'guildIntegrationsUpdate',
+        'guildMemberAdd',
+        'guildMemberAvailable',
+        'guildMemberRemove',
+        'guildMembersChunk',
+        'guildMemberSpeaking',
+        'guildMemberUpdate',
+        'guildUnavailable',
+        'guildUpdate',
+        'roleCreate',
+        'roleDelete',
+        'roleUpdate',
+        'typingStart',
+        'userUpdate',
+        'voiceStateUpdate',
+        'webhookUpdate',
+        'startup',
+        'shutdown'
+        ]
+
+    constructor(private _guildID: string) {
         super();
     }
     onChannelCreate(channel: Channel): boolean {
@@ -127,7 +159,7 @@ export class CustomGuildScript extends EventEmitter {
 
         return status;
     }
-    onGuildBanAdd(guild: Guild, user: User) {
+    onGuildBanAdd(guild: Guild, user: User | PartialUser) {
         if (guild.id !== this.guildID) return false;
         let status = false;
         this.emit('guildBanAdd', guild, user, () => {
@@ -136,7 +168,7 @@ export class CustomGuildScript extends EventEmitter {
 
         return status;
     }
-    onGuildBanRemove(guild: Guild, user: User) {
+    onGuildBanRemove(guild: Guild, user: User | PartialUser) {
         if (guild.id !== this.guildID) return false;
         let status = false;
         this.emit('guildBanRemove', guild, user, () => {
@@ -153,7 +185,7 @@ export class CustomGuildScript extends EventEmitter {
         });
         return status;
     }
-    onGuildMemberAvailable(member: GuildMember): boolean {
+    onGuildMemberAvailable(member: GuildMember | PartialGuildMember): boolean {
         if (member.guild.id !== this.guildID) return false;
         let status = false;
         this.emit('guildMemberAvailable', member, () => {
@@ -161,7 +193,7 @@ export class CustomGuildScript extends EventEmitter {
         });
         return status;
     }
-    onGuildMemberRemove(member: GuildMember): boolean {
+    onGuildMemberRemove(member: GuildMember | PartialGuildMember): boolean {
         if (member.guild.id !== this.guildID) return false;
         let status = false;
         this.emit('guildMemberRemove', member, () => {
@@ -169,7 +201,7 @@ export class CustomGuildScript extends EventEmitter {
         });
         return status;
     }
-    onGuildMembersChunk(members: GuildMember[], guild: Guild): boolean {
+    onGuildMembersChunk(members: Collection<string, GuildMember | PartialGuildMember>, guild: Guild): boolean {
         if (guild.id !== this.guildID) return false;
         let status = false;
         this.emit('guildMembersChunk', members, guild, () => {
@@ -177,15 +209,15 @@ export class CustomGuildScript extends EventEmitter {
         });
         return status;
     }
-    onGuildMemberSpeaking(member: GuildMember, speaking: boolean): boolean {
-        if (member.guild.id !== this.guildID) return false;
+    onGuildMemberSpeaking(guildMember: GuildMember | PartialGuildMember, speaking: Readonly<Speaking>): boolean {
+        if (guildMember.guild.id !== this.guildID) return false;
         let status = false;
-        this.emit('guildMemberSpeaking', member, speaking, () => {
+        this.emit('guildMemberSpeaking', guildMember, speaking, () => {
             status = true;
         });
         return status;
     }
-    onGuildMemberUpdate(oldMember: GuildMember, newMember: GuildMember): boolean {
+    onGuildMemberUpdate(oldMember:  GuildMember | PartialGuildMember, newMember: GuildMember | PartialGuildMember): boolean {
         if (oldMember.id !== newMember.id) return false;
         if (oldMember.guild.id !== this.guildID) return false;
         let status = false;
@@ -203,7 +235,7 @@ export class CustomGuildScript extends EventEmitter {
         });
         return status;
     }
-    onMessageDelete(message: Message): boolean {
+    onMessageDelete(message: Message | PartialMessage): boolean {
         if (!message.guild) return false;
         if (message.guild.id !== this.guildID) return false;
         let status = false;
@@ -212,7 +244,7 @@ export class CustomGuildScript extends EventEmitter {
         });
         return status;
     }
-    onMessageReactionAdd(messageReaction: MessageReaction, user: User): boolean {
+    onMessageReactionAdd(messageReaction: MessageReaction, user: User | PartialUser): boolean {
         if (!messageReaction.message.guild) return false;
         if (messageReaction.message.guild.id !== this.guildID) return false;
         let status = false;
@@ -221,7 +253,7 @@ export class CustomGuildScript extends EventEmitter {
         });
         return status;
     }
-    onMessageReactionRemove(messageReaction: MessageReaction, user: User): boolean {
+    onMessageReactionRemove(messageReaction: MessageReaction, user: User | PartialUser): boolean {
         if (!messageReaction.message.guild) return false;
         if (messageReaction.message.guild.id !== this.guildID) return false;
         let status = false;
@@ -230,7 +262,7 @@ export class CustomGuildScript extends EventEmitter {
         });
         return status;
     }
-    onMessageReactionRemoveAll(message: Message): boolean {
+    onMessageReactionRemoveAll(message: Message | PartialMessage): boolean {
         if (!message.guild) return false;
         if (message.guild.id !== this.guildID) return false;
         let status = false;
@@ -239,7 +271,7 @@ export class CustomGuildScript extends EventEmitter {
         });
         return status;
     }
-    onMessageUpdate(oldMessage: Message, newMessage: Message): boolean {
+    onMessageUpdate(oldMessage: Message | PartialMessage, newMessage: Message | PartialMessage): boolean {
         if (!oldMessage.guild || !newMessage.guild) return false;
         if (oldMessage.guild.id !== this.guildID) return false;
         if (newMessage.guild.id !== this.guildID) return false;
@@ -279,7 +311,7 @@ export class CustomGuildScript extends EventEmitter {
         });
         return status;
     }
-    onTypingStart(channel: Channel, user: User): boolean {
+    onTypingStart(channel: Channel | PartialDMChannel, user: User | PartialUser): boolean {
         const guildChannel = channel as GuildChannel;
         if (!guildChannel.guild) return false;
         let status = false;
@@ -288,16 +320,7 @@ export class CustomGuildScript extends EventEmitter {
         });
         return status;
     }
-    onTypingStop(channel: Channel, user: User): boolean {
-        const guildChannel = channel as GuildChannel;
-        if (!guildChannel.guild) return false;
-        let status = false;
-        this.emit('typingStop', channel, user, () => {
-            status = true;
-        });
-        return status;
-    }
-    onUserUpdate(oldUser: User, newUser: User): boolean {
+    onUserUpdate(oldUser: User | PartialUser, newUser: User | PartialUser): boolean {
         if (oldUser.id !== newUser.id) return false;
         const client = oldUser.client;
         const guild = client.guilds.cache.find(g => g.id === this.guildID);
@@ -308,13 +331,13 @@ export class CustomGuildScript extends EventEmitter {
         this.emit('userUpdate', oldUser, newUser);
         return false;
     }
-    onVoiceStateUpdate(oldMember: GuildMember, newMember: GuildMember): boolean {
-        if (!oldMember.guild) return false;
-        if (!newMember.guild) return false;
-        if (oldMember.guild.id !== this.guildID) return false;
-        if (newMember.guild.id !== this.guildID) return false;
+    onVoiceStateUpdate(oldVoiceState: VoiceState, newVoiceState:VoiceState): boolean {
+        if (!oldVoiceState.guild) return false;
+        if (!newVoiceState.guild) return false;
+        if (oldVoiceState.guild.id !== this.guildID) return false;
+        if (newVoiceState.guild.id !== this.guildID) return false;
         let status = false;
-        this.emit('voiceStateUpdate', oldMember, newMember, () => {
+        this.emit('voiceStateUpdate', oldVoiceState, newVoiceState, () => {
             status = true;
         });
         return status;
@@ -355,22 +378,6 @@ export class CustomGuildScript extends EventEmitter {
         return status;
     }
 
-    onGuildCreate(guild: Guild): boolean {
-        if (guild.id !== this.guildID) return false;
-        let status = false;
-        this.emit('guildCreate', guild, () => {
-            status = true;
-        });
-        return status;
-    }
-    onGuildDelete(guild: Guild): boolean {
-        if (guild.id !== this.guildID) return false;
-        let status = false;
-        this.emit('guildDelete', guild, () => {
-            status = true;
-        });
-        return status;
-    }
     onStartUp(client: Client): Promise<void> {
         return new Promise(resolve => {
             const guild = client.guilds.cache.find(g => g.id === this.guildID);
@@ -397,5 +404,8 @@ export class CustomGuildScript extends EventEmitter {
             });
             if (!callbackProvided) return resolve();
         });
+    }
+    get guildID() {
+        return this._guildID;
     }
 }

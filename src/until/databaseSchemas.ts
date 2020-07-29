@@ -6,6 +6,7 @@ export interface MongooseGuildSchema extends Document {
     prefix: string;
     swearPrevention: boolean;
     autoConversion: boolean;
+    channelFlags: string[];
     ptUpdateChannels: string[];
     imageDeliveryChannels: string[];
 }
@@ -16,6 +17,7 @@ const GuildSchema = new Schema({
     language: String,
     autoConversion: Boolean,
     swearPrevention: Boolean,
+    channelFlags: [String] ,
     ptUpdateChannels: [String],
     imageDeliveryChannels: [String],
 }, {

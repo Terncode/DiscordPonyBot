@@ -1,6 +1,6 @@
 import { Message, TextChannel, GuildMember } from 'discord.js';
 import { GuildAdminCommands, Language } from '../../language/langTypes';
-import { getLanguage, changeGuildPrefix, getAvailableLanguages, changeGuildLanguage, addPTUpdateChannel, removeImageDeliveryChannel, addImageDeliveryChannel, removePTUpdateChannel, enableDisableGuildAutoConversion, enableDisableGuildSwearPrevention } from '../../until/guild';
+import { getLanguage, changeGuildPrefix, getAvailableLanguages, changeGuildLanguage, addPTUpdateChannel, removeImageDeliveryChannel, addImageDeliveryChannel, removePTUpdateChannel, enableDisableGuildAutoConversion, enableDisableGuildSwearPrevention, ChannelFlag, setFlagToChannel } from '../../until/guild';
 import { checkCommand, getCommandArgs, removePrefixAndCommand } from '../../until/commandsHandler';
 import { reportErrorToOwner } from '../../until/errors';
 import { hasPermissionInChannel, extractMessage } from '../../until/util';
@@ -15,6 +15,7 @@ export const GUILD_ADMIN_COMMANDS: GuildAdminCommands = {
     autoConversion: ['a.conversion', 'a.autounit'],
     swearPrevention: ['a.swearprotection', 'a.swearprotection'],
     kick: ['a.kick', 'a.throw'],
+    setFlag: ['a.flag'],
     ban: ['a.ban'],
     purge: ['a.purge'],
     purgeAll: ['a.purge.all'],
@@ -23,7 +24,6 @@ export const GUILD_ADMIN_COMMANDS: GuildAdminCommands = {
 export function guildAdmin(message: Message): boolean {
     if (!message.guild || !message.member) return false;
     const language = getLanguage(message.guild);
-
     if (checkCommand(message, [...language.guildAdmin.commands.changeLanguage, ...GUILD_ADMIN_COMMANDS.changeLanguage])) {
         if (message.member.permissionsIn(message.channel).has('MANAGE_GUILD')) changeLanguage(message, language);
         else message.channel.send(language.guildAdmin.noPermissionManageGuild);
@@ -56,7 +56,11 @@ export function guildAdmin(message: Message): boolean {
         if (message.member.permissionsIn(message.channel).has('BAN_MEMBERS')) banMember(message, language);
         else message.channel.send(language.guildAdmin.noPermissionBanMembers);
         return true;
-    } else if (checkCommand(message, [...language.guildAdmin.commands.purge, ...GUILD_ADMIN_COMMANDS.purge])) {
+    } else if (checkCommand(message, [...language.guildAdmin.commands.setFlag, ...GUILD_ADMIN_COMMANDS.setFlag])) {
+        if (message.member.permissionsIn(message.channel).has('MANAGE_CHANNELS')) ignoreChannel(message, language);
+        else message.channel.send(language.guildAdmin.noPermissionManageChannels);
+        return true;
+    }  else if (checkCommand(message, [...language.guildAdmin.commands.purge, ...GUILD_ADMIN_COMMANDS.purge])) {
         if (message.member.permissionsIn(message.channel).has('MANAGE_MESSAGES')) purge(message, language);
         else message.channel.send(language.guildAdmin.noPermissionManageChannels);
         return true;
@@ -212,13 +216,13 @@ function replaceString(text: string, channel: string, service: string) {
 
 async function kickMember(message: Message, language: Language) {
 
-    if (!message.guild || !message.guild.me) return
+    if (!message.guild || !message.guild.me) return;
     if (!message.guild.me.permissions.has('KICK_MEMBERS')) {
         message.channel.send(language.guildAdmin.noPermissionKickMembers);
         return;
     }
 
-    const mentionsCollections = message.mentions.members
+    const mentionsCollections = message.mentions.members;
     const mentions = mentionsCollections ? mentionsCollections.map(m => m) : [];
     const content = removePrefixAndCommand(message).replace(/<@!?[0-9]*>/g, '');
 
@@ -252,7 +256,7 @@ async function banMember(message: Message, language: Language) {
         message.channel.send(language.guildAdmin.botDoesNotHavePermissionBanMembers);
         return;
     }
-    const mentionsCollections = message.mentions.members
+    const mentionsCollections = message.mentions.members;
     const mentions = mentionsCollections ? mentionsCollections.map(m => m) : [];
     const content = removePrefixAndCommand(message).replace(/<@!?[0-9]*>/g, '');
 
@@ -268,7 +272,7 @@ async function banMember(message: Message, language: Language) {
             await dm.send(language.guildAdmin.youHaveBeenBanned.replace(/&GUILD_NAME/g, message.guild.name).replace(/&REASON/g, r));
         } catch (_) {/* ignored */ }
         try {
-            const m = await member.ban({ reason: content })
+            const m = await member.ban({ reason: content });
             message.channel.send(language.guildAdmin.memberHasBeenBaned.replace(/&USER/g, m.user.tag));
         } catch (error) {
             message.channel.send(language.guildAdmin.cannotPerformActionOnUser);
@@ -332,7 +336,7 @@ async function purge(message: Message, language: Language) {
     if (messages.length >= numberOfMessages + 1) {
         const shouldBulk = !!messages.find(e => e.createdTimestamp > twoWeeksAgo);
         if (shouldBulk) {
-            await message.channel.bulkDelete(messages)
+            await message.channel.bulkDelete(messages);
         } else {
             const purgeMessages = messages.splice(0, numberOfMessages + 1);
             for (const purgeMessage of purgeMessages) {
@@ -378,5 +382,31 @@ async function purgeAll(message: Message, language: Language) {
         await newChannel.setPosition(pos);
     } else {
         message.channel.send(language.guildAdmin.noPermissionManageChannels);
+    }
+}
+
+async function ignoreChannel(message: Message, language: Language) {
+    if (!message.guild) return;
+    const args = getCommandArgs(message);
+    const flag = args[0].toLowerCase();
+    const ignore = ['ignore', ...language.guildAdmin.flagIgnore];
+    const doNotReact = ['do-not-react', ...language.guildAdmin.flagDoNotReact];
+    const preventSwears = ['prevent-swears', ...language.guildAdmin.flagPreventSwears];
+    const clear = ['clear', ...language.guildAdmin.flagClear];
+    
+    if (ignore.includes(flag)) {
+        const result = await setFlagToChannel(message.channel as TextChannel, ChannelFlag.Ignore);
+        message.channel.send(result ? language.guildAdmin.flagIgnoreMessage : language.guildAdmin.flagSomethingWentWrong);    
+    } else if (doNotReact.includes(flag)) {
+        const result = await setFlagToChannel(message.channel as TextChannel, ChannelFlag.DoNotReact);
+        message.channel.send(result ? language.guildAdmin.flagDoNotReactMessage : language.guildAdmin.flagSomethingWentWrong);
+    } else if (preventSwears.includes(flag)) {
+        const result = await setFlagToChannel(message.channel as TextChannel, ChannelFlag.PreventSwears);
+        message.channel.send(result ? language.guildAdmin.flagPreventSwearsMessage : language.guildAdmin.flagSomethingWentWrong);    
+    } else if (clear.includes(flag)) {
+        const result = await setFlagToChannel(message.channel as TextChannel, ChannelFlag.Clear);
+        message.channel.send(result ? language.guildAdmin.flagClearMessage : language.guildAdmin.flagSomethingWentWrong);       
+    } else {
+        message.channel.send(language.guildAdmin.flagUnknownFlag);  
     }
 }

@@ -1,6 +1,4 @@
 import { Client, Message, PresenceStatusData } from 'discord.js';
-import { onMessage, onStartUp, guildMemberAdd, guildMemberRemove, onShutDown, guildBanAdd, guildBanRemove } from './main';
-import { clientGuildJoin } from './other/joinLeaves';
 import { Config } from './interfaces';
 import { reportErrorToOwner } from './until/errors';
 import { connectToDB } from './until/database';
@@ -8,6 +6,7 @@ import { setup, loadLanguages, getALLImageDeliveryChannels, getAllPTUpdateChanne
 import { ImageDelivery } from './other/derpibooru/imageDelivery';
 import { hasPermissionInChannel } from './until/util';
 import { PTUpdateChecker } from './other/ptown/updateChecker';
+import {onShutDown, setupPluginManager } from './pluginManager';
 
 let idleTimeout: NodeJS.Timeout | undefined;
 export const client = new Client();
@@ -17,8 +16,6 @@ export let config: Config;
 export let ptChecker: PTUpdateChecker;
 export const supportServer = 'https://discord.gg/HPvbWYp';
 
-let shouldUpdateActivity = true;
-let ready = false;
 try {
     config = require('../config.json');
 } catch (_) {
@@ -37,30 +34,28 @@ try {
 if (process.env.NODE_ENV !== 'production') {
     console.log(JSON.stringify(config, undefined, 2));
 }
-client.on('ready', async () => {
-    // setUp();
+export let shouldUpdateActivity = false;
+
+function login(token: string) {
+ return new Promise((resolve) => {
+    const onReadyCallback = () => {
+        client.removeListener('ready',onReadyCallback);
+        onReady();
+        resolve();
+    };
+
+    client.on('ready', onReadyCallback);
+    client.login(token);
+
+ });
+}
+async function onReady() {
     console.info(`loggined as ${client.user!.tag}`);
     console.info(`Access to ${client.guilds.cache.size} guilds`);
     inviteLink = await client.generateInvite('ADMINISTRATOR');
     if (client.user!.bot) console.info(`Invite link: ${inviteLink}`);
     updateActivity();
-    onStartUp(client);
-});
-
-client.on('message', message => { if (ready) onMessage(message); });
-client.on('guildCreate', guild => {
-    if (shouldUpdateActivity) updateActivity();
-    clientGuildJoin(guild);
-});
-client.on('guildDelete', () => {
-    if (shouldUpdateActivity) updateActivity();
-});
-client.on('guildMemberAdd', member => { guildMemberAdd(member); });
-client.on('guildMemberRemove', member => { guildMemberRemove(member); });
-client.on('guildBanAdd', (guild, user) => { guildBanAdd(guild, user); });
-client.on('guildBanRemove', (guild, user) => { guildBanRemove(guild, user); });
-client.on('debug', bug => { if (config.DEBUG) console.log(bug); });
-client.on('error', console.error);
+}
 
 // process.on('SIGKILL', () => destroy());
 process.on('beforeExit', () => destroy());
@@ -156,13 +151,13 @@ async function boot() {
         console.info('Connecting to database...');
         await connectToDB(config.DB_CONNECTION_STRING);
         console.info('Connecting to discord...');
-        await client.login(config.TOKEN);
+        await login(config.TOKEN);
         console.info('Setting everything up...');
         await setup(client);
         console.info('Starting services.');
         startServices();
-        ready = true;
         console.info('Done.');
+        setupPluginManager(client);
     } catch (error) {
         console.error(error);
         await client.destroy();
