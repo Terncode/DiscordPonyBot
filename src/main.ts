@@ -7,7 +7,6 @@ import { help } from './other/misc/help';
 import { chatMonitor } from './other/chatMonitor';
 
 import { startsWithPrefix } from './until/commandsHandler';
-import { PTCommands } from './other/ptown/PCommands';
 import { urbanDictionary } from './other/dictionary/urbanDictionary';
 import { dictionary } from './other/dictionary/dictionary';
 import { derpibooruCommand } from './other/derpibooru/derpiboo';
@@ -30,7 +29,6 @@ export async function onMessage(message: Message) {
     if (message.author.bot) return; // If its bot we ignore
     if (startsWithPrefix(message)) {
         // idle(message);
-        if (PTCommands(message)) return;
         if (help(message)) return;
         if (stats(message)) return;
         if (translate(message)) return;

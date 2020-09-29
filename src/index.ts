@@ -2,10 +2,9 @@ import { Client, Message, PresenceStatusData } from 'discord.js';
 import { Config } from './interfaces';
 import { reportErrorToOwner } from './until/errors';
 import { connectToDB } from './until/database';
-import { setup, loadLanguages, getALLImageDeliveryChannels, getAllPTUpdateChannels } from './until/guild';
+import { setup, loadLanguages, getALLImageDeliveryChannels } from './until/guild';
 import { ImageDelivery } from './other/derpibooru/imageDelivery';
 import { hasPermissionInChannel } from './until/util';
-import { PTUpdateChecker } from './other/ptown/updateChecker';
 import {onShutDown, setupPluginManager } from './pluginManager';
 
 let idleTimeout: NodeJS.Timeout | undefined;
@@ -13,7 +12,6 @@ export const client = new Client();
 export const version = 'v14/06/2020';
 export let inviteLink: string;
 export let config: Config;
-export let ptChecker: PTUpdateChecker;
 export const supportServer = 'https://discord.gg/HPvbWYp';
 
 try {
@@ -25,10 +23,7 @@ try {
         DEBUG: !!process.env.DEBUG,
         OWNER_ID: process.env.OWNER_ID,
         PREFIX: process.env.PREFIX || '-',
-        DB_CONNECTION_STRING: process.env.DB_CONNECTION_STRING || '',
-        PT_UPDATER_DOMAIN: process.env.PT_UPDATER_DOMAIN || undefined,
-        PT_UPDATER_LOGO: process.env.PT_UPDATER_LOGO || undefined,
-        PT_UPDATER_NAME: process.env.PT_UPDATER_NAME || undefined,
+        DB_CONNECTION_STRING: process.env.DB_CONNECTION_STRING || ''
     };
 }
 if (process.env.NODE_ENV !== 'production') {
@@ -116,32 +111,6 @@ function startServices() {
             reportErrorToOwner(client, error);
         }
     });
-
-    if (config.PT_UPDATER_NAME && config.PT_UPDATER_DOMAIN && config.PT_UPDATER_LOGO) {
-        ptChecker = new PTUpdateChecker(config.PT_UPDATER_NAME, config.PT_UPDATER_DOMAIN, config.PT_UPDATER_LOGO);
-        ptChecker.on('update', async (richEmbed, changeLog) => {
-
-            try {
-                const channels = await getAllPTUpdateChannels(client);
-                for (const channel of channels) {
-                    if (hasPermissionInChannel(channel, 'SEND_MESSAGES')) {
-                        if (hasPermissionInChannel(channel, 'EMBED_LINKS')) {
-                            channel.send(richEmbed);
-                        } else {
-                            const code = '```';
-                            let chLog = `${changeLog.version}\n,${changeLog.changes.join('\n')}`;
-                            chLog = chLog.slice(0, 2000);
-                            const lastNewlineIndex = chLog.lastIndexOf('\n');
-                            chLog = lastNewlineIndex === -1 ? `${chLog}...` : `${chLog.slice(0, lastNewlineIndex)}...`;
-                            channel.send(`${code}\n${chLog}${code}`);
-                        }
-                    }
-                }
-            } catch (error) {
-                reportErrorToOwner(client, error);
-            }
-        });
-    }
 }
 
 async function boot() {

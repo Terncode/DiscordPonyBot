@@ -18,7 +18,6 @@ const GuildSchema = new Schema({
     autoConversion: Boolean,
     swearPrevention: Boolean,
     channelFlags: [String] ,
-    ptUpdateChannels: [String],
     imageDeliveryChannels: [String],
 }, {
     writeConcern: {

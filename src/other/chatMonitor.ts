@@ -1,8 +1,7 @@
 import { Message, TextChannel } from 'discord.js';
-
-import { hasBadWords } from './ptown/swears';
 import { hasPermissionInChannel } from '../until/util';
 import { isSwearPreventionEnabled, isAutoConversionEnabled, doNotReactChannels, preventSwearsChannels } from '../until/guild';
+const noswears = require('no-swears');
 const IM = require('convert-units');
 
 interface ObjectWithDynamicNames {
@@ -46,7 +45,7 @@ export function chatMonitor(message: Message) {
     if (!message.guild) return;
     if (preventSwearsChannels.includes(message.channel.id) && hasPermissionInChannel(message.channel, 'MANAGE_MESSAGES')) {
         const content = message.content;
-        if (hasBadWords(content)) {    
+        if (noswears.hasBadWords(content)) {    
             message.delete();
             if(content.length > 50 && content.length < 1940) {
                 message.author.createDM().then(dm => {
@@ -92,7 +91,7 @@ function swearsDetection(message: Message) {
     const content = message.content.toLowerCase().replace(/[^a-zA-Z:,]+/g, '');
     const guild = message.guild;
     if (hasPermissionInChannel(message.channel, 'ADD_REACTIONS') || hasPermissionInChannel(message.channel, 'MANAGE_MESSAGES')) {
-        if (hasBadWords(content)) {
+        if (noswears.hasBadWords(content)) {
             if (isSwearPreventionEnabled(message.guild) && hasPermissionInChannel(message.channel, 'MANAGE_MESSAGES')) {
                 message.delete();
             } else if (hasPermissionInChannel(message.channel, 'ADD_REACTIONS')) {

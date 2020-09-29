@@ -66,7 +66,6 @@ export async function createGuildDataBase(guild: Guild) {
             swearPrevention: false,
             autoConversion: false,
             emojiReaction: true,
-            ptUpdateChannels: [],
             imageDeliveryUpdatesChannels: [],
         });
 
@@ -246,17 +245,6 @@ export async function removeDeletedChannelsFromSubscriptions(client: Client) {
         if (!guild) continue;
         const channelsIDs = guild.channels.cache.filter(c => c.type === 'text').map(c => c.id);
 
-        const ptUpdateChannels = [...guildDB.ptUpdateChannels];
-        for (const id of guildDB.ptUpdateChannels) {
-            if (!channelsIDs.includes(id)) {
-                const index = ptUpdateChannels.indexOf(id);
-                if (index !== -1) {
-                    ptUpdateChannels.splice(index, 1);
-                    shouldUpdate = true;
-                }
-                removedChannelsId.push(id);
-            }
-        }
 
         const imageDeliveryChannels = [...guildDB.imageDeliveryChannels];
         for (const id of guildDB.imageDeliveryChannels) {
@@ -270,7 +258,6 @@ export async function removeDeletedChannelsFromSubscriptions(client: Client) {
             }
         }
         if (shouldUpdate) {
-            guildDB.ptUpdateChannels = ptUpdateChannels;
             guildDB.imageDeliveryChannels = imageDeliveryChannels;
             await guildDB.save();
         }
@@ -291,27 +278,6 @@ export async function addImageDeliveryChannel(guild: Guild, channel: TextChannel
     return true;
 }
 
-// returns false if it is already on list
-export async function addPTUpdateChannel(guild: Guild, channel: TextChannel) {
-    const guildDB = await guildFind(guild.id);
-    if (!guildDB) throw new Error('Unable to find guild');
-    if (guildDB.ptUpdateChannels.includes(channel.id)) return false;
-
-    guildDB.ptUpdateChannels.push(channel.id);
-    await guildDB.save();
-    return true;
-}
-
-export async function removePTUpdateChannel(guild: Guild, id: string) {
-    const guildDB = await guildFind(guild.id);
-    if (!guildDB) throw new Error('Unable to find guild');
-    const index = guildDB.ptUpdateChannels.indexOf(id);
-    if (index === -1) return false;
-    guildDB.ptUpdateChannels.splice(index, 1);
-    await guildDB.save();
-    return true;
-}
-
 export async function removeImageDeliveryChannel(guild: Guild, id: string) {
     const guildDB = await guildFind(guild.id);
     if (!guildDB) throw new Error('Unable to find guild');
@@ -323,19 +289,7 @@ export async function removeImageDeliveryChannel(guild: Guild, id: string) {
     return true;
 }
 
-export async function getAllPTUpdateChannels(client: Client) {
-    const channels: TextChannel[] = [];
-    const guildsDB = await getGuildsInDataBase();
-    for (const guildDB of guildsDB) {
-        const guild = client.guilds.cache.find(g => g.id === guildDB.id);
-        if (!guild) continue;
-        for (const ptChannel of guildDB.ptUpdateChannels) {
-            const channel = guild.channels.cache.find(c => c.id === ptChannel && c.type === 'text') as TextChannel;
-            if (channel) channels.push(channel);
-        }
-    }
-    return channels;
-}
+
 
 export async function getALLImageDeliveryChannels(client: Client) {
     const channels: TextChannel[] = [];

@@ -1,6 +1,6 @@
 import { Message, TextChannel, GuildMember } from 'discord.js';
 import { GuildAdminCommands, Language } from '../../language/langTypes';
-import { getLanguage, changeGuildPrefix, getAvailableLanguages, changeGuildLanguage, addPTUpdateChannel, removeImageDeliveryChannel, addImageDeliveryChannel, removePTUpdateChannel, enableDisableGuildAutoConversion, enableDisableGuildSwearPrevention, ChannelFlag, setFlagToChannel } from '../../until/guild';
+import { getLanguage, changeGuildPrefix, getAvailableLanguages, changeGuildLanguage, removeImageDeliveryChannel, addImageDeliveryChannel, enableDisableGuildAutoConversion, enableDisableGuildSwearPrevention, ChannelFlag, setFlagToChannel } from '../../until/guild';
 import { checkCommand, getCommandArgs, removePrefixAndCommand } from '../../until/commandsHandler';
 import { reportErrorToOwner } from '../../until/errors';
 import { hasPermissionInChannel, extractMessage } from '../../until/util';
@@ -31,10 +31,6 @@ export function guildAdmin(message: Message): boolean {
     } else if (checkCommand(message, [...language.guildAdmin.commands.changePrefix, ...GUILD_ADMIN_COMMANDS.changePrefix])) {
         if (message.member.permissionsIn(message.channel).has('MANAGE_GUILD')) changePrefix(message, language);
         else message.channel.send(language.guildAdmin.noPermissionManageGuild);
-        return true;
-    } else if (checkCommand(message, [...language.guildAdmin.commands.subscribeToPTUpdates, ...GUILD_ADMIN_COMMANDS.subscribeToPTUpdates])) {
-        if (message.member.permissionsIn(message.channel).has('MANAGE_CHANNELS')) updatesPT(message, language);
-        else message.channel.send(language.guildAdmin.noPermissionManageChannels);
         return true;
     } else if (checkCommand(message, [...language.guildAdmin.commands.subscribeToPonyImages, ...GUILD_ADMIN_COMMANDS.subscribeToPonyImages])) {
         if (message.member.permissionsIn(message.channel).has('MANAGE_CHANNELS')) imageDelivery(message, language);
@@ -186,29 +182,6 @@ async function imageDelivery(message: Message, language: Language) {
     }
 }
 
-async function updatesPT(message: Message, language: Language) {
-    if (!message.guild) return;
-    const channel = message.channel;
-    const args = getCommandArgs(message);
-    const channelName = channel.toString();
-    const serviceName = language.guildAdmin.updatesPT;
-    try {
-        if (language.guildAdmin.subscribe.includes(args[0])) {
-            const status = await addPTUpdateChannel(message.guild, channel as TextChannel);
-            if (status) message.channel.send(replaceString(language.guildAdmin.subscribedSuccessfully, channelName, serviceName));
-            else message.channel.send(replaceString(language.guildAdmin.alreadySubscribed, channelName, serviceName));
-        } else if (language.guildAdmin.unsubscribe.includes(args[0])) {
-            const status = await removePTUpdateChannel(message.guild, channel.id);
-            if (status) message.channel.send(replaceString(language.guildAdmin.unsubscribedSuccessfully, channelName, serviceName));
-            else message.channel.send(replaceString(language.guildAdmin.notSubscribed, channelName, serviceName));
-        } else {
-            message.channel.send(language.guildAdmin.incorrectUse);
-        }
-    } catch (error) {
-        message.channel.send(language.guildAdmin.unknownError);
-    }
-}
-
 function replaceString(text: string, channel: string, service: string) {
     return text.replace(/&CHANNEL/g, channel)
         .replace(/&SERVICE_NAME/g, service);
@@ -336,7 +309,8 @@ async function purge(message: Message, language: Language) {
     if (messages.length >= numberOfMessages + 1) {
         const shouldBulk = !!messages.find(e => e.createdTimestamp > twoWeeksAgo);
         if (shouldBulk) {
-            await message.channel.bulkDelete(messages);
+            const textChannel = message.channel as TextChannel;
+            await textChannel.bulkDelete(messages);
         } else {
             const purgeMessages = messages.splice(0, numberOfMessages + 1);
             for (const purgeMessage of purgeMessages) {
@@ -355,7 +329,8 @@ async function purge(message: Message, language: Language) {
 
             const purgeMessages = messages.splice(0, messages.length < numberOfMessages ? messages.length : numberOfMessages);
 
-            const deletedCollection = await message.channel.bulkDelete(purgeMessages);
+            const textChannel = message.channel as TextChannel;
+            const deletedCollection = await textChannel.bulkDelete(purgeMessages);
             const deleted = deletedCollection.map(m => m);
             for (const delMsg of deleted) {
                 const indexOf = purgeMessages.indexOf(delMsg);

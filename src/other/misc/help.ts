@@ -9,7 +9,6 @@ import { GUILD_ADMIN_COMMANDS } from '../admin/guildAdmin';
 import { hasPermissionInChannel } from '../../until/util';
 import { signEmbed } from '../../until/embeds';
 import { DICTIONARY_COMMANDS } from '../dictionary/dictionary';
-import { PT_COMMANDS } from '../ptown/PCommands';
 import { TRANSLATE_COMMANDS } from '../translate';
 
 export const HELP_COMMANDS: HelpCommands = ['help', '?'];
@@ -56,7 +55,6 @@ export function aliases(message: Message, language: Language) {
     const lang: string[] = [
         `\`${[...language.help.commands.adminHelp, ...HELP_COMMANDS].join('`, `')}\``,
         `\`${[...language.derpibooru.commands, ...DERPIBOORU_COMMANDS].join('`, `')}\``,
-        `\`${[...language.pt.commands.roll, ...PT_COMMANDS.roll].join('`, `')}\``,
         `\`${[...language.miscellaneous.commands.facts, ...MISCELLANEOUS_COMMANDS.facts].join('`, `')}\``,
         `\`${[...language.miscellaneous.commands.jokes, ...MISCELLANEOUS_COMMANDS.jokes].join('`, `')}\``,
         `\`${[...language.miscellaneous.commands.boop, ...MISCELLANEOUS_COMMANDS.boop].join('`, `')}\``,
@@ -94,7 +92,6 @@ export function helpEntries(language: Language, prefix: string, sfw = true) {
     const lang: string[] = [
         repPre(language.help.help, prefix).replace(/&COMMAND/g, [...language.help.commands.adminHelp, ...HELP_COMMANDS][0]),
         repPre(language.help.derpibooru, prefix).replace(/&COMMAND/g, [...language.derpibooru.commands, ...DERPIBOORU_COMMANDS][0]),
-        repPre(language.help.fact, prefix).replace(/&COMMAND/g, [...language.pt.commands.roll, ...PT_COMMANDS.roll][0]),
         repPre(language.help.fact, prefix).replace(/&COMMAND/g, [...language.miscellaneous.commands.facts, ...MISCELLANEOUS_COMMANDS.facts][0]),
         repPre(language.help.joke, prefix).replace(/&COMMAND/g, [...language.miscellaneous.commands.jokes, ...MISCELLANEOUS_COMMANDS.jokes][0]),
         repPre(language.help.boop, prefix).replace(/&COMMAND/g, [...language.miscellaneous.commands.boop, ...MISCELLANEOUS_COMMANDS.boop][0]),

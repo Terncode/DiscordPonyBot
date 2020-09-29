@@ -1,7 +1,6 @@
 import { GuildPlugin } from "./Plugins/GuildPlugin";
 import { Client, MessageReaction, User, PartialUser, Message, PartialMessage, Channel, TextChannel, VoiceChannel, GuildEmoji, Guild, GuildMember, PartialGuildMember, Collection, Speaking, Role, PartialDMChannel, VoiceState } from "discord.js";
 
-
 // Plugins
 import { ternsCodeLab } from "./Plugins/TernsCodelab/TernsCodeLabIndex";
 import { onMessage } from "./main";
@@ -9,15 +8,11 @@ import { config, updateActivity, shouldUpdateActivity } from ".";
 import { clientGuildJoin, onGuildMemberJoin, onGuildMemberLeave, onGuildMemberBan, onGuildMemberBanRemove } from "./other/joinLeaves";
 
 
-
 const plugins: GuildPlugin[] = [
     ternsCodeLab
 ];
 
-
 const guildPluginLoaded = new Map<string, GuildPlugin[]>();
-
-
 
 export function setupPluginManager(client: Client) {
     if (client.readyAt === null) throw new Error('Client is not ready');

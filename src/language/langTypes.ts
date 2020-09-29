@@ -6,7 +6,6 @@ export interface Language {
     timeFormatting: string;
     notWorkInDm: string;
     author: string;
-    pt: PT;
     logs: Logs;
     urbanDictionary: UrbanDictionary;
     derpibooru: Derpibooru;
@@ -163,15 +162,6 @@ interface Help {
         adminHelp: HelpCommands;
         AliasesCommands: AliasesCommands;
     };
-}
-
-interface PT {
-    randomFace: string;
-    collected: string;
-    rolled: string;
-    toys: string;
-    missingPermissionAttachFiles: string;
-    commands: PTCommands;
 }
 
 export interface UrbanDictionary {
