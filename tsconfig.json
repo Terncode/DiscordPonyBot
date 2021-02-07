@@ -14,9 +14,11 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
+    "skipLibCheck": true
   },
   "exclude": [
-    "languages"
+    "languages", 
+    "node_modules"
   ],
   "include": [
     "src/**/*"
